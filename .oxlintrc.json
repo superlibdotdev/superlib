@@ -5,8 +5,16 @@
     "correctness": "error"
   },
   "rules": {
-    "typescript/explicit-function-return-type": "error",
+    "typescript/explicit-function-return-type": ["error", { "allowExpressions": true }],
     "no-empty-file": "off",
     "no-console": "error"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["**/examples/**"],
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ]
 }
