@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["import", "typescript", "unicorn"],
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {
+    "typescript/explicit-function-return-type": "error",
+    "no-empty-file": "off",
+    "no-console": "error"
+  }
+}

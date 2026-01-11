@@ -1,0 +1,81 @@
+import type { StandardSchemaV1 } from "../../schema/StandardSchema"
+
+import { ResultAsync, type Result } from "../../basic"
+import { validateSchema, type ValidationError } from "../../schema/validateSchema"
+import {
+  makeSafeFetch,
+  type SafeFetch,
+  type SafeFetchError,
+  type SafeFetchOptions,
+} from "../safeFetch"
+
+export type JsonHttpClientError =
+  | SafeFetchError
+  | { type: "jsonHttpClient/json-parse"; cause: unknown }
+  | ValidationError
+
+const defaultSafeFetchOptions: SafeFetchOptions = {
+  retry: {
+    times: 3,
+    delay: { milliseconds: 200 }, // @note: jittered by default
+    untilStatus: (status) => status >= 200 && status < 300,
+  },
+  timeout: { seconds: 5 },
+}
+
+export class JsonHttpClient {
+  constructor(private readonly safeFetch: SafeFetch = makeSafeFetch(defaultSafeFetchOptions)) {}
+
+  private async request<T>(
+    url: string,
+    schema: StandardSchemaV1<T>,
+    requestInit?: RequestInit,
+  ): Promise<Result<T, JsonHttpClientError>> {
+    return new ResultAsync(this.safeFetch(url, requestInit))
+      .andThen((response) =>
+        ResultAsync.try(
+          () => response.json(),
+          (err): JsonHttpClientError => ({ type: "jsonHttpClient/json-parse", cause: err }),
+        ),
+      )
+      .andThen((json) => {
+        return validateSchema(schema, json)
+      })
+      .toPromise()
+  }
+
+  async get<T>(url: string, schema: StandardSchemaV1<T>): Promise<Result<T, JsonHttpClientError>> {
+    return this.request(url, schema)
+  }
+
+  async post<T>(
+    url: string,
+    body: unknown,
+    schema: StandardSchemaV1<T>,
+  ): Promise<Result<T, JsonHttpClientError>> {
+    return this.request(url, schema, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    })
+  }
+
+  async patch<T>(
+    url: string,
+    body: unknown,
+    schema: StandardSchemaV1<T>,
+  ): Promise<Result<T, JsonHttpClientError>> {
+    return this.request(url, schema, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    })
+  }
+
+  async delete<T>(
+    url: string,
+    schema: StandardSchemaV1<T>,
+  ): Promise<Result<T, JsonHttpClientError>> {
+    return this.request(url, schema, { method: "DELETE" })
+  }
+}

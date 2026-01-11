@@ -1,0 +1,24 @@
+{
+  "name": "superlib",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "fmt": "oxfmt --check",
+    "fmt:fix": "oxfmt",
+    "lint": "bun run --elide-lines=0 --workspaces lint",
+    "lint:fix": "bun run --elide-lines=0 --workspaces lint:fix",
+    "test": "bun run --workspaces test",
+    "fix": "bun run fmt:fix && bun run lint:fix && bun test"
+  },
+  "dependencies": {
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "oxfmt": "^0.20.0",
+    "oxlint": "^1.35.0",
+    "oxlint-tsgolint": "^0.10.0"
+  }
+}

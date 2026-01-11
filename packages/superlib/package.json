@@ -1,0 +1,18 @@
+{
+  "name": "@superlib/superlib",
+  "type": "module",
+  "module": "index.ts",
+  "scripts": {
+    "lint": "oxlint --type-aware --type-check --deny-warnings",
+    "lint:fix": "bun run lint --fix",
+    "test": "bun test",
+    "fix": "cd ../.. && bun run fix"
+  },
+  "dependencies": {
+    "remeda": "^2.32.0",
+    "temporal-polyfill": "^0.3.0"
+  },
+  "devDependencies": {
+    "zod": "^4.3.5"
+  }
+}

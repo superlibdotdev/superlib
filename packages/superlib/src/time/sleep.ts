@@ -1,0 +1,7 @@
+import { durationToMs, type DurationLike } from "."
+
+export function sleep(duration: DurationLike): Promise<void> {
+  const ms = durationToMs(Temporal.Duration.from(duration))
+
+  return new Promise<void>((r) => setTimeout(r, ms))
+}
