@@ -1,12 +1,40 @@
 {
-  "name": "@superlib/superlib",
+  "name": "superlib",
+  "version": "1.2.0",
+  "description": "A missing standard library for TypeScript, providing utilities for async orchestration, error handling, filesystem abstraction, and common patterns",
   "type": "module",
   "module": "index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./platform/filesystem": "./src/platform/filesystem/index.ts",
+    "./platform/get-port": "./src/platform/get-port/index.ts",
+    "./platform/JsonHttpClient": "./src/platform/JsonHttpClient/index.ts",
+    "./platform/ProcessContext": "./src/platform/ProcessContext/index.ts",
+    "./platform/safeFetch": "./src/platform/safeFetch/index.ts"
+  },
+  "files": [
+    "src/**/*.ts",
+    "!**/*.test.ts"
+  ],
   "scripts": {
     "lint": "oxlint --type-aware --type-check --deny-warnings",
     "lint:fix": "bun run lint --fix",
     "test": "bun test",
     "fix": "cd ../.. && bun run fix"
+  },
+  "keywords": [
+    "typescript",
+    "stdlib",
+    "utilities",
+    "result",
+    "task",
+    "async"
+  ],
+  "author": "Kris Kaczor",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/superlibdotdev/superlib.git"
   },
   "dependencies": {
     "remeda": "^2.32.0",

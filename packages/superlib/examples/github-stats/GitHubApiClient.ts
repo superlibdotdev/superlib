@@ -2,12 +2,12 @@ import { z } from "zod"
 
 import type { FileSystemCache } from "./FileSystemCache"
 
-import { Err, ErrResult, Ok, type Result } from "../../src"
+import { Err, ErrResult, Ok, type Result } from "superlib"
 import {
   JsonHttpClient,
   type JsonHttpClientError,
-} from "../../src/platform/JsonHttpClient/JsonHttpClient"
-import { makeSafeFetch } from "../../src/platform/safeFetch"
+} from "superlib/platform/JsonHttpClient"
+import { makeSafeFetch } from "superlib/platform/safeFetch"
 
 export const GitHubUserSchema = z.object({
   login: z.string(),
