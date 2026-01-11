@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import type { FileSystemCache } from "./cache"
+import type { FileSystemCache } from "./FileSystemCache"
 
 import { Err, ErrResult, Ok, type Result } from "../../src"
 import { JsonHttpClient, type JsonHttpClientError } from "../../src/platform/JsonHttpClient"

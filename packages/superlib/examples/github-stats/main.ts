@@ -18,7 +18,7 @@
 
 import { FileSystem } from "../../src/platform/filesystem"
 import { ProcessContext } from "../../src/platform/ProcessContext"
-import { FileSystemCache } from "./cache"
+import { FileSystemCache } from "./FileSystemCache"
 import { GitHubApiClient, type GitHubUser } from "./GitHubApiClient"
 import { printGithubStats } from "./printGithubStats"
 
