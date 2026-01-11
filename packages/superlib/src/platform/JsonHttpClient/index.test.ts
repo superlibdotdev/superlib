@@ -93,7 +93,7 @@ describe(JsonHttpClient.name, () => {
     })
   })
 
-  describe.only(JsonHttpClient.prototype.patch.name, () => {
+  describe(JsonHttpClient.prototype.patch.name, () => {
     it("passes JSON body and returns Ok when response matches schema", async () => {
       const safeFetch = mock(async () =>
         Ok(new Response(JSON.stringify({ updated: true }), { status: 200 })),
