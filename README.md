@@ -5,7 +5,7 @@ Missing standard library for TypeScript
 ## Install
 
 ```sh
-npm install superlib
+npm install superlib@nightly
 ```
 
 ## Features:
@@ -18,7 +18,7 @@ npm install superlib
 
 ## Examples
 
-- [github-stats](./packages/superlib/examples/github-stats/) - Fetches GitHub repository statistics using SuperLib's Task pipeline, SafeFetch, and FileSystem abstractions
+- [github-stats](./packages/examples/github-stats/) - Fetches GitHub repository statistics using SuperLib's Task pipeline, SafeFetch, and FileSystem abstractions
 
 ### License
 
