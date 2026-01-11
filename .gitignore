@@ -24,3 +24,5 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 .cache
 *.tsbuildinfo
+# same as /README.md
+/packages/superlib/README.md
