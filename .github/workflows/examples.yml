@@ -13,14 +13,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - name: Build and pack superlib
-        run: cd packages/superlib && bun add -D @types/node && bun run build && npm pack
+        run: cd packages/superlib && bun install && bun run build && npm pack
       - name: Setup test directory
         run: |
-          mkdir -p /tmp/example-test
-          cp -r packages/superlib/examples/github-stats /tmp/example-test/
+          cp -r packages/examples /tmp/example-test
           cd /tmp/example-test
-          echo '{"type":"module","dependencies":{"remeda":"^2.32.0","zod":"^4.3.5"}}' > package.json
-          bun add $GITHUB_WORKSPACE/packages/superlib/superlib-*.tgz
+          sed -i 's/"superlib": "workspace:\*"/"superlib": "file:'"$GITHUB_WORKSPACE"'\/packages\/superlib\/superlib-1.2.0.tgz"/' package.json
+          bun install
       - name: Run example
         run: cd /tmp/example-test && bun github-stats/main.ts
 
@@ -36,15 +35,14 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: Build and pack superlib
-        run: cd packages/superlib && bun add -D @types/node && bun run build && npm pack
+        run: cd packages/superlib && bun install && bun run build && npm pack
       - name: Setup test directory
         run: |
-          mkdir -p /tmp/example-test
-          cp -r packages/superlib/examples/github-stats /tmp/example-test/
+          cp -r packages/examples /tmp/example-test
           cd /tmp/example-test
-          echo '{"type":"module","dependencies":{"remeda":"^2.32.0","zod":"^4.3.5"}}' > package.json
-          npm add $GITHUB_WORKSPACE/packages/superlib/superlib-*.tgz
-          npm add -D tsx
+          sed -i 's/"superlib": "workspace:\*"/"superlib": "file:'"$GITHUB_WORKSPACE"'\/packages\/superlib\/superlib-1.2.0.tgz"/' package.json
+          npm install
+          npm install -D tsx
       - name: Run example
         run: cd /tmp/example-test && npx tsx github-stats/main.ts
 
@@ -55,13 +53,12 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - uses: denoland/setup-deno@v2
       - name: Build and pack superlib
-        run: cd packages/superlib && bun add -D @types/node && bun run build && npm pack
+        run: cd packages/superlib && bun install && bun run build && npm pack
       - name: Setup test directory
         run: |
-          mkdir -p /tmp/example-test
-          cp -r packages/superlib/examples/github-stats /tmp/example-test/
+          cp -r packages/examples /tmp/example-test
           cd /tmp/example-test
-          echo '{"type":"module","dependencies":{"remeda":"^2.32.0","zod":"^4.3.5"}}' > package.json
-          bun add $GITHUB_WORKSPACE/packages/superlib/superlib-*.tgz
+          sed -i 's/"superlib": "workspace:\*"/"superlib": "file:'"$GITHUB_WORKSPACE"'\/packages\/superlib\/superlib-1.2.0.tgz"/' package.json
+          bun install
       - name: Run example
         run: cd /tmp/example-test && deno run --sloppy-imports --allow-net --allow-env --allow-read --allow-write --allow-sys github-stats/main.ts
