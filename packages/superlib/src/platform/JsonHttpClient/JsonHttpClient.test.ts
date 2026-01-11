@@ -4,7 +4,7 @@ import { z } from "zod"
 import type { SafeFetchResult } from "../safeFetch"
 
 import { Err, Ok } from "../../basic"
-import { JsonHttpClient } from "./index"
+import { JsonHttpClient } from "./JsonHttpClient"
 
 describe(JsonHttpClient.name, () => {
   describe(JsonHttpClient.prototype.get.name, () => {
