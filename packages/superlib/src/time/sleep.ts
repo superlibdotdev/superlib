@@ -1,4 +1,4 @@
-import { durationToMs, type DurationLike } from "."
+import { durationToMs, type DurationLike } from "./index"
 
 export function sleep(duration: DurationLike): Promise<void> {
   const ms = durationToMs(Temporal.Duration.from(duration))
