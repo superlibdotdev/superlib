@@ -1,0 +1,59 @@
+name: Nightly Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: nightly-release
+  cancel-in-progress: false
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+
+      - run: bun run fmt
+      - run: bun run lint
+      - run: bun test
+
+      - name: Set nightly version
+        id: version
+        working-directory: packages/superlib
+        run: |
+          BASE_VERSION=$(jq -r '.version' package.json)
+          DATE=$(date +%Y%m%d)
+          SHORT_SHA=$(git rev-parse --short=7 HEAD)
+          NIGHTLY_VERSION="${BASE_VERSION}-nightly.${DATE}.${SHORT_SHA}"
+          echo "version=${NIGHTLY_VERSION}" >> $GITHUB_OUTPUT
+
+          jq --arg v "$NIGHTLY_VERSION" '.version = $v' package.json > package.json.tmp
+          mv package.json.tmp package.json
+
+          echo "Publishing version: $NIGHTLY_VERSION"
+
+      - name: Build package
+        working-directory: packages/superlib
+        run: bun run build
+
+      - name: Publish to npm
+        working-directory: packages/superlib
+        run: npm publish --tag nightly --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create summary
+        run: |
+          echo "## Nightly Release Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Install with:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "npm install superlib@nightly" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
