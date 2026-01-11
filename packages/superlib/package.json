@@ -1,6 +1,6 @@
 {
   "name": "superlib",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A missing standard library for TypeScript, providing utilities for async orchestration, error handling, filesystem abstraction, and common patterns",
   "keywords": [
     "async",
@@ -17,7 +17,8 @@
     "url": "git+https://github.com/superlibdotdev/superlib.git"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "type": "module",
   "main": "./dist/index.js",
@@ -50,7 +51,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && bun run scripts/fix-imports.ts",
+    "build": "tsc -p tsconfig.build.json && bun run scripts/fix-imports.ts && cp ../../README.md .",
     "lint": "oxlint --type-aware --type-check --deny-warnings",
     "lint:fix": "bun run lint --fix",
     "test": "bun test",
