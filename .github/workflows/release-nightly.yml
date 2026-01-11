@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
 
+permissions:
+  id-token: write # Required for OIDC
+  contents: read
+
 concurrency:
   group: nightly-release
   cancel-in-progress: false
@@ -44,8 +48,6 @@ jobs:
       - name: Publish to npm
         working-directory: packages/superlib
         run: npm publish --tag nightly --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create summary
         run: |
