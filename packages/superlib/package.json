@@ -2,39 +2,59 @@
   "name": "superlib",
   "version": "1.2.0",
   "description": "A missing standard library for TypeScript, providing utilities for async orchestration, error handling, filesystem abstraction, and common patterns",
-  "type": "module",
-  "module": "index.ts",
-  "exports": {
-    ".": "./index.ts",
-    "./platform/filesystem": "./src/platform/filesystem/index.ts",
-    "./platform/get-port": "./src/platform/get-port/index.ts",
-    "./platform/JsonHttpClient": "./src/platform/JsonHttpClient/index.ts",
-    "./platform/ProcessContext": "./src/platform/ProcessContext/index.ts",
-    "./platform/safeFetch": "./src/platform/safeFetch/index.ts"
+  "keywords": [
+    "async",
+    "result",
+    "stdlib",
+    "task",
+    "typescript",
+    "utilities"
+  ],
+  "license": "MIT",
+  "author": "Kris Kaczor",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/superlibdotdev/superlib.git"
   },
   "files": [
-    "src/**/*.ts",
-    "!**/*.test.ts"
+    "dist"
   ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./platform/filesystem": {
+      "types": "./dist/platform/filesystem/index.d.ts",
+      "default": "./dist/platform/filesystem/index.js"
+    },
+    "./platform/get-port": {
+      "types": "./dist/platform/get-port/index.d.ts",
+      "default": "./dist/platform/get-port/index.js"
+    },
+    "./platform/JsonHttpClient": {
+      "types": "./dist/platform/JsonHttpClient/index.d.ts",
+      "default": "./dist/platform/JsonHttpClient/index.js"
+    },
+    "./platform/ProcessContext": {
+      "types": "./dist/platform/ProcessContext/index.d.ts",
+      "default": "./dist/platform/ProcessContext/index.js"
+    },
+    "./platform/safeFetch": {
+      "types": "./dist/platform/safeFetch/index.d.ts",
+      "default": "./dist/platform/safeFetch/index.js"
+    }
+  },
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "lint": "oxlint --type-aware --type-check --deny-warnings",
     "lint:fix": "bun run lint --fix",
     "test": "bun test",
     "fix": "cd ../.. && bun run fix"
-  },
-  "keywords": [
-    "typescript",
-    "stdlib",
-    "utilities",
-    "result",
-    "task",
-    "async"
-  ],
-  "author": "Kris Kaczor",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/superlibdotdev/superlib.git"
   },
   "dependencies": {
     "remeda": "^2.32.0",
