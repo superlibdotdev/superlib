@@ -20,6 +20,10 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
 
+      - uses: actions/setup-node@v4
+        with:
+          registry-url: "https://registry.npmjs.org"
+
       - run: bun install --frozen-lockfile
 
       - run: bun run fmt
@@ -47,7 +51,7 @@ jobs:
 
       - name: Publish to npm
         working-directory: packages/superlib
-        run: npm publish --tag nightly --access public
+        run: npm publish --tag nightly --access public --provenance
 
       - name: Create summary
         run: |
