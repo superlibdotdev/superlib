@@ -21,7 +21,6 @@ export const GitHubUserSchema = z.object({
 export type GitHubUser = z.infer<typeof GitHubUserSchema>
 
 export type GitHubApiError =
-  | { type: "github/rate-limited" }
   | { type: "github/not-found"; username: string }
   | { type: "github/network"; cause: JsonHttpClientError }
   | { type: "github/timeout" }
@@ -44,7 +43,7 @@ export class GitHubApiClient {
 
   async getUser(username: string): Promise<Result<GitHubUser, GitHubApiError>> {
     const cached = await this.cache.get(username)
-    if (cached) {
+    if (cached !== undefined) {
       return Ok(cached)
     }
 
