@@ -6,6 +6,7 @@
   },
   "rules": {
     "typescript/explicit-function-return-type": ["error", { "allowExpressions": true }],
+    "unicorn/prefer-node-protocol": "error",
     "no-empty-file": "off",
     "no-console": "error"
   },

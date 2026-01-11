@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import * as pathModule from "path"
+import * as pathModule from "node:path"
 
 import { AbsolutePath } from "./AbsolutePath"
 

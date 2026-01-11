@@ -41,4 +41,7 @@ async function main(): Promise<void> {
   await printGithubStats(github, usernames)
 }
 
-main().catch(console.error)
+main().catch((e) => {
+  console.error(e)
+  process.exit(1)
+})
