@@ -2,6 +2,12 @@
 
 Missing standard library for TypeScript
 
+## Install
+
+```sh
+npm install superlib
+```
+
 ## Features:
 
 - `Task` primitive to orchestrate async work (retries, timeouts, concurrency etc.)
@@ -13,3 +19,9 @@ Missing standard library for TypeScript
 ## Examples
 
 - [github-stats](./packages/superlib/examples/github-stats/) - Fetches GitHub repository statistics using SuperLib's Task pipeline, SafeFetch, and FileSystem abstractions
+
+### License
+
+MIT
+
+Special thanks to [davidhq](https://github.com/davidhq) for donating the npm's package name.
