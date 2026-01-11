@@ -16,8 +16,9 @@
  *   GITHUB_USERS=octocat,torvalds bun examples/github-stats/main.ts
  */
 
-import { FileSystem } from "../../src/platform/filesystem"
-import { ProcessContext } from "../../src/platform/ProcessContext"
+import { FileSystem } from "superlib/platform/filesystem"
+import { ProcessContext } from "superlib/platform/ProcessContext"
+
 import { FileSystemCache } from "./FileSystemCache"
 import { GitHubApiClient, type GitHubUser } from "./GitHubApiClient"
 import { printGithubStats } from "./printGithubStats"

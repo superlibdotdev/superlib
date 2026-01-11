@@ -1,4 +1,4 @@
-import type { AbsolutePath, IFileSystem } from "../../src/platform/filesystem"
+import type { AbsolutePath, IFileSystem } from "superlib/platform/filesystem"
 
 export class FileSystemCache<T> {
   constructor(

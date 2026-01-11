@@ -1,6 +1,6 @@
 import { zip } from "remeda"
+import { Task } from "superlib"
 
-import { Task } from "../../src"
 import { type GitHubApiClient } from "./GitHubApiClient"
 
 export async function printGithubStats(
