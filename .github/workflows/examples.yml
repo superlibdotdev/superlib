@@ -18,7 +18,7 @@ jobs:
         run: |
           cp -r packages/examples /tmp/example-test
           cd /tmp/example-test
-          sed -i 's/"superlib": "workspace:\*"/"superlib": "file:'"$GITHUB_WORKSPACE"'\/packages\/superlib\/superlib-1.2.0.tgz"/' package.json
+          sed -i 's|"superlib": "workspace:\*"|"superlib": "file:'"$GITHUB_WORKSPACE"'/packages/superlib/superlib-1.2.0.tgz"|' package.json
           bun install
       - name: Run example
         run: cd /tmp/example-test && bun github-stats/main.ts
@@ -40,7 +40,7 @@ jobs:
         run: |
           cp -r packages/examples /tmp/example-test
           cd /tmp/example-test
-          sed -i 's/"superlib": "workspace:\*"/"superlib": "file:'"$GITHUB_WORKSPACE"'\/packages\/superlib\/superlib-1.2.0.tgz"/' package.json
+          sed -i 's|"superlib": "workspace:\*"|"superlib": "file:'"$GITHUB_WORKSPACE"'/packages/superlib/superlib-1.2.0.tgz"|' package.json
           npm install
           npm install -D tsx
       - name: Run example
@@ -58,7 +58,7 @@ jobs:
         run: |
           cp -r packages/examples /tmp/example-test
           cd /tmp/example-test
-          sed -i 's/"superlib": "workspace:\*"/"superlib": "file:'"$GITHUB_WORKSPACE"'\/packages\/superlib\/superlib-1.2.0.tgz"/' package.json
+          sed -i 's|"superlib": "workspace:\*"|"superlib": "file:'"$GITHUB_WORKSPACE"'/packages/superlib/superlib-1.2.0.tgz"|' package.json
           bun install
       - name: Run example
         run: cd /tmp/example-test && deno run --sloppy-imports --allow-net --allow-env --allow-read --allow-write --allow-sys github-stats/main.ts
