@@ -1,5 +1,5 @@
-import assert from "assert"
-import * as pathModule from "path"
+import assert from "node:assert"
+import * as pathModule from "node:path"
 
 class AbsolutePathClazz {
   public readonly path: string

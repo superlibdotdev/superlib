@@ -4,7 +4,7 @@ import { z } from "zod"
 import type { SafeFetchResult } from "../safeFetch"
 
 import { Err, Ok } from "../../basic"
-import { JsonHttpClient } from "./index"
+import { JsonHttpClient } from "./JsonHttpClient"
 
 describe(JsonHttpClient.name, () => {
   describe(JsonHttpClient.prototype.get.name, () => {
@@ -129,7 +129,10 @@ describe(JsonHttpClient.name, () => {
 
       expect(result).toEqual(Ok({ removed: true }))
       expect(safeFetch).toHaveBeenCalledTimes(1)
-      expect(safeFetch.mock.calls[0]!).toEqual(["https://example.com", { method: "DELETE" }] as any)
+      expect(safeFetch.mock.calls[0]!).toEqual([
+        "https://example.com",
+        { method: "DELETE", headers: { "content-type": "application/json" } },
+      ] as any)
     })
   })
 })
