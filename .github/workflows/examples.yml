@@ -64,4 +64,4 @@ jobs:
           echo '{"type":"module","dependencies":{"remeda":"^2.32.0","zod":"^4.3.5"}}' > package.json
           bun add $GITHUB_WORKSPACE/packages/superlib/superlib-*.tgz
       - name: Run example
-        run: cd /tmp/example-test && deno run --allow-net --allow-env --allow-read --allow-write --allow-sys github-stats/main.ts
+        run: cd /tmp/example-test && deno run --sloppy-imports --allow-net --allow-env --allow-read --allow-write --allow-sys github-stats/main.ts
