@@ -1,20 +1,59 @@
-import { describe, expect, it } from "bun:test"
-import { createServer } from "node:net"
+import { afterEach, describe, expect, it } from "bun:test"
+import { createServer, type Server } from "node:net"
 
 import { checkPort } from "./checkPort"
 
-// todo: this test is broken. FIX
-describe.skip(checkPort.name, () => {
-  it("marks busy port as busy", (done) => {
-    const port = 8123
-    const server = createServer()
+describe(checkPort.name, () => {
+  let server: Server | null = null
+
+  afterEach(async () => {
+    if (server) {
+      await new Promise<void>((resolve) => {
+        server!.close(() => resolve())
+      })
+      server = null
+    }
+  })
+
+  it("returns true for available port", async () => {
+    const port = 18200
+
+    const result = await checkPort(port)
+
+    expect(result).toBeTrue()
+  })
+
+  it("returns false when IPv4 port is busy", async () => {
+    const port = 18201
+    server = createServer()
+    server.unref()
+    await new Promise<void>((resolve) => {
+      server!.listen(port, "127.0.0.1", () => resolve())
+    })
+
+    const result = await checkPort(port)
+
+    expect(result).toBeFalse()
+  })
+
+  it("returns false when IPv6 port is busy", async () => {
+    const port = 18202
+    server = createServer()
     server.unref()
 
-    server.listen(port, "localhost", async () => {
-      const r = await checkPort(port)
+    try {
+      await new Promise<void>((resolve, reject) => {
+        server!.on("error", reject)
+        server!.listen(port, "::1", () => resolve())
+      })
+    } catch {
+      // IPv6 not available on this system, skip test
+      server = null
+      return
+    }
 
-      expect(r).toBeFalse()
-      done()
-    })
+    const result = await checkPort(port)
+
+    expect(result).toBeFalse()
   })
 })
