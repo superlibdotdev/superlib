@@ -40,9 +40,17 @@ describe(checkPort.name, () => {
     const port = 18202
     server = createServer()
     server.unref()
-    await new Promise<void>((resolve) => {
-      server!.listen(port, "::1", () => resolve())
-    })
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        server!.on("error", reject)
+        server!.listen(port, "::1", () => resolve())
+      })
+    } catch {
+      // IPv6 not available on this system, skip test
+      server = null
+      return
+    }
 
     const result = await checkPort(port)
 
