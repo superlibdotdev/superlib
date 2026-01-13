@@ -33,9 +33,9 @@
       "types": "./dist/platform/filesystem/index.d.ts",
       "default": "./dist/platform/filesystem/index.js"
     },
-    "./platform/get-port": {
-      "types": "./dist/platform/get-port/index.d.ts",
-      "default": "./dist/platform/get-port/index.js"
+    "./platform/getPort": {
+      "types": "./dist/platform/getPort/index.d.ts",
+      "default": "./dist/platform/getPort/index.js"
     },
     "./platform/JsonHttpClient": {
       "types": "./dist/platform/JsonHttpClient/index.d.ts",
