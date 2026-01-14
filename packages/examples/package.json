@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "remeda": "^2.32.0",
-    "superlib": "workspace:*",
+    "@superlibdotdev/superlib": "workspace:*",
     "zod": "^4.3.5"
   }
 }
