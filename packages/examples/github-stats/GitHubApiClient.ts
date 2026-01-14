@@ -1,6 +1,9 @@
-import { Err, ErrResult, Ok, type Result } from "superlib"
-import { JsonHttpClient, type JsonHttpClientError } from "superlib/platform/JsonHttpClient"
-import { makeSafeFetch } from "superlib/platform/safeFetch"
+import { Err, ErrResult, Ok, type Result } from "@superlibdotdev/superlib"
+import {
+  JsonHttpClient,
+  type JsonHttpClientError,
+} from "@superlibdotdev/superlib/platform/JsonHttpClient"
+import { makeSafeFetch } from "@superlibdotdev/superlib/platform/safeFetch"
 import { z } from "zod"
 
 import type { FileSystemCache } from "./FileSystemCache"

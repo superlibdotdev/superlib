@@ -57,11 +57,13 @@ jobs:
 
       - name: Create summary
         run: |
-          echo "## Nightly Release Published" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Version:** \`${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Install with:" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "npm install superlib@nightly" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ## Nightly Release Published
+
+          **Version:** \`${{ steps.version.outputs.version }}\`
+
+          Install with:
+          \`\`\`bash
+          npm install @superlibdotdev/superlib@nightly
+          \`\`\`
+          EOF
