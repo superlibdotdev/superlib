@@ -3,7 +3,7 @@ import * as pathModule from "node:path"
 import type {
   DirRemoveError,
   FileAccessError,
-  FileSystemEntity,
+  FileSystemEntry,
   FileWriteError,
   IFileSystem,
 } from "./IFileSystem"
@@ -146,18 +146,18 @@ export class MemoryFileSystem implements IFileSystem {
     }
   }
 
-  async listDirectory(path: AbsolutePath): Promise<FileSystemEntity[]> {
+  async listDirectory(path: AbsolutePath): Promise<FileSystemEntry[]> {
     if (!this.directories.has(path.path)) {
       return []
     }
 
-    const files = this.getFiles(path.path).map((path): FileSystemEntity => ({ type: "file", path }))
-    const dirs = this.getDirs(path.path).map((path): FileSystemEntity => ({ type: "dir", path }))
+    const files = this.getFiles(path.path).map((path): FileSystemEntry => ({ type: "file", path }))
+    const dirs = this.getDirs(path.path).map((path): FileSystemEntry => ({ type: "dir", path }))
 
     return [...files, ...dirs]
   }
 
-  async get(path: AbsolutePath): Promise<FileSystemEntity | undefined> {
+  async get(path: AbsolutePath): Promise<FileSystemEntry | undefined> {
     if (this.files.has(path.path)) {
       return {
         type: "file",

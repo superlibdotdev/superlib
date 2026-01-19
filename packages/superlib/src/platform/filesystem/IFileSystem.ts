@@ -10,15 +10,15 @@ export interface IFileSystem {
     path: AbsolutePath,
     options: { recursive: boolean; force: boolean },
   ): Promise<Result<void, DirRemoveError>>
-  listDirectory(path: AbsolutePath): Promise<FileSystemEntity[]>
+  listDirectory(path: AbsolutePath): Promise<FileSystemEntry[]>
 
-  get(path: AbsolutePath): Promise<FileSystemEntity | undefined>
+  get(path: AbsolutePath): Promise<FileSystemEntry | undefined>
   exists(path: AbsolutePath): Promise<boolean>
 
   createTempDir(prefix: string): Promise<AsyncDisposable & { path: AbsolutePath }>
 }
 
-export type FileSystemEntity =
+export type FileSystemEntry =
   | {
       type: "file"
       path: AbsolutePath

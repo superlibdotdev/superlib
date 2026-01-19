@@ -1,4 +1,7 @@
 import { describe, expect, it } from "bun:test"
+import { sort } from "remeda"
+
+import type { FileSystemEntry } from "../IFileSystem"
 
 import { AbsolutePath } from "../AbsolutePath"
 import { MemoryFileSystem } from "../MemoryFileSystem"
@@ -23,32 +26,29 @@ describe.only(glob.name, () => {
         "CONTRIBUTING.md": "how to contribute to this repo",
       },
     },
+    ".gitignore": "",
   })
 
-  it("finds deeply nested files", async () => {
+  it("finds deeply nested entries", async () => {
     const results = await glob({ cwd: AbsolutePath("/"), pattern: "**/*.ts" }, fs)
 
-    const expected: AbsolutePath[] = [
-      AbsolutePath("/proj/lib/server.ts"),
-      AbsolutePath("/proj/index.ts"),
-      AbsolutePath("/tmp/another-proj/index.ts"),
-    ]
-    expect(results).toEqual(expect.arrayContaining(expected))
-    expect(results).toHaveLength(expected.length)
+    expect(sortByPath(results)).toEqual([
+      { type: "file", path: AbsolutePath("/proj/index.ts") },
+      { type: "file", path: AbsolutePath("/proj/lib/server.ts") },
+      { type: "file", path: AbsolutePath("/tmp/another-proj/index.ts") },
+    ])
   })
 
-  it("finds all entities in directory", async () => {
+  it("finds all entry in directory", async () => {
     const results = await glob({ cwd: AbsolutePath("/proj"), pattern: "lib/*" }, fs)
 
-    const expected: AbsolutePath[] = [
-      AbsolutePath("/proj/lib/server.ts"),
-      AbsolutePath("/proj/lib/components"),
-    ]
-    expect(results).toEqual(expect.arrayContaining(expected))
-    expect(results).toHaveLength(expected.length)
+    expect(sortByPath(results)).toEqual([
+      { type: "dir", path: AbsolutePath("/proj/lib/components") },
+      { type: "file", path: AbsolutePath("/proj/lib/server.ts") },
+    ])
   })
 
-  it("finds no files for incorrect pattern", async () => {
+  it("finds no entries for incorrect pattern", async () => {
     const results = await glob(
       {
         cwd: AbsolutePath("/"),
@@ -57,10 +57,37 @@ describe.only(glob.name, () => {
       fs,
     )
 
-    const expected: AbsolutePath[] = []
-    expect(results).toEqual(expect.arrayContaining(expected))
-    expect(results).toHaveLength(expected.length)
+    expect(results).toEqual([])
   })
 
-  it.skip("finds all files with '**'", () => {})
+  it("finds all entries with '**'", async () => {
+    const results = await glob(
+      {
+        cwd: AbsolutePath("/"),
+        pattern: "**",
+      },
+      fs,
+    )
+
+    expect(sortByPath(results)).toMatchSnapshot()
+  })
+
+  describe("option onlyFiles", () => {
+    it("returns paths for files", async () => {
+      const results = await glob(
+        {
+          cwd: AbsolutePath("/"),
+          onlyFiles: true,
+          pattern: "**/*.tsx",
+        },
+        fs,
+      )
+
+      expect(results).toEqual([AbsolutePath("/proj/lib/components/Home.tsx")])
+    })
+  })
 })
+
+function sortByPath(results: FileSystemEntry[]): FileSystemEntry[] {
+  return sort(results, (a, b) => a.path.path.localeCompare(b.path.path))
+}

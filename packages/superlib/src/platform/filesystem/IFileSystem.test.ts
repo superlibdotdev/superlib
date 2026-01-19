@@ -4,7 +4,6 @@ import type { IFileSystem } from "./IFileSystem"
 
 import { Err, Ok } from "../../basic/Result"
 import { AbsolutePath } from "./AbsolutePath"
-import { FileSystem } from "./FileSystem"
 import { MemoryFileSystem } from "./MemoryFileSystem"
 
 const fileSystems: (typeof MemoryFileSystem)[] = [

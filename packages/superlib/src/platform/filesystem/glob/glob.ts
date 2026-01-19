@@ -1,4 +1,4 @@
-import type { IFileSystem } from "../IFileSystem"
+import type { FileSystemEntry, IFileSystem } from "../IFileSystem"
 
 import { assert } from "../../../basic"
 import { Task } from "../../../task"
@@ -7,14 +7,32 @@ import { parseGlob, type GlobChunk } from "./parseGlob"
 
 export interface GlobOptions {
   pattern: string
+  onlyFiles?: boolean
   cwd: AbsolutePath
 }
 
-export async function glob(options: GlobOptions, fs: IFileSystem): Promise<AbsolutePath[]> {
+export async function glob(
+  options: GlobOptions & { onlyFiles: true },
+  fs: IFileSystem,
+): Promise<AbsolutePath[]>
+export async function glob(
+  options: GlobOptions & { onlyFiles?: false },
+  fs: IFileSystem,
+): Promise<FileSystemEntry[]>
+export async function glob(
+  options: GlobOptions,
+  fs: IFileSystem,
+): Promise<FileSystemEntry[] | AbsolutePath[]> {
   const cwd = options.cwd
   const chunks = parseGlob(options.pattern)
 
-  return await matchGlobWalker(chunks, cwd, fs, new Set())
+  const entries = await matchGlobWalker(chunks, cwd, fs, new Set())
+
+  if (options.onlyFiles) {
+    return entries.filter((e) => e.type === "file").map((e) => e.path)
+  }
+
+  return entries
 }
 
 async function matchGlobWalker(
@@ -22,7 +40,7 @@ async function matchGlobWalker(
   cwd: AbsolutePath,
   fs: IFileSystem,
   visited: Set<string>,
-): Promise<AbsolutePath[]> {
+): Promise<FileSystemEntry[]> {
   const [chunk, ...rest] = chunks
   if (!chunk) {
     const cwdEntity = await fs.get(cwd)
@@ -34,12 +52,8 @@ async function matchGlobWalker(
       return []
     }
 
-    if (cwdEntity.type === "file") {
-      visited.add(cwd.path)
-      return [cwd]
-    } else {
-      return []
-    }
+    visited.add(cwd.path)
+    return [cwdEntity]
   }
 
   switch (chunk.type) {
@@ -68,7 +82,7 @@ async function matchGlobWalker(
     case "globstar": {
       const entities = await fs.listDirectory(cwd)
 
-      const newCwds = entities.filter((c) => c.type === "dir").map((m) => m.path)
+      const newCwds = entities.map((m) => m.path)
 
       const results = await Task.all(
         [
