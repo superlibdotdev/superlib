@@ -7,7 +7,7 @@ import { AbsolutePath } from "../AbsolutePath"
 import { MemoryFileSystem } from "../MemoryFileSystem"
 import { glob } from "./glob"
 
-describe.only(glob.name, () => {
+describe(glob.name, () => {
   const fs = new MemoryFileSystem({
     "/proj": {
       lib: {
