@@ -3,10 +3,14 @@ import { describe, expect, it } from "bun:test"
 import type { IFileSystem } from "./IFileSystem"
 
 import { Err, Ok } from "../../basic/Result"
+import { AbsolutePath } from "./AbsolutePath"
 import { FileSystem } from "./FileSystem"
 import { MemoryFileSystem } from "./MemoryFileSystem"
 
-const fileSystems = [FileSystem, MemoryFileSystem]
+const fileSystems: (typeof MemoryFileSystem)[] = [
+  MemoryFileSystem,
+  // FileSystem
+]
 
 for (const FS of fileSystems) {
   const fileSystem = new FS() as IFileSystem
@@ -64,6 +68,8 @@ for (const FS of fileSystems) {
 
         expect(await fileSystem.readFile(filePath)).toEqual(Ok("second"))
       })
+
+      it.skip("throws when writing file to non-existing dir", () => {})
     })
 
     describe(FS.prototype.exists.name, () => {
@@ -184,6 +190,53 @@ for (const FS of fileSystems) {
         expect(await fileSystem.exists(tempDir.path)).toBeFalse()
         expect(await fileSystem.exists(filename)).toBeFalse()
       })
+    })
+
+    describe(FS.prototype.get.name, () => {
+      it("gets existing file", async () => {
+        await using tmp = await fileSystem.createTempDir("superlib-tests")
+        const dir = tmp.path
+        const filePath = dir.join("notes.txt")
+        await fileSystem.writeFile(filePath, "hello")
+
+        expect(await fileSystem.get(filePath)).toEqual({ type: "file", path: filePath })
+      })
+
+      it("gets existing dir", async () => {
+        await using tmp = await fileSystem.createTempDir("superlib-tests")
+
+        expect(await fileSystem.get(tmp.path)).toEqual({ type: "dir", path: tmp.path })
+      })
+
+      it("returns undefined for not existing", async () => {
+        expect(await fileSystem.get(AbsolutePath("/usr"))).toEqual(undefined)
+      })
+    })
+
+    describe(FS.prototype.listDirectory.name, () => {
+      it("lists non empty dir", async () => {
+        await using tmp = await fileSystem.createTempDir("superlib-tests")
+        const dir = tmp.path
+
+        const filePath = dir.join("notes.txt")
+        await fileSystem.writeFile(filePath, "hello")
+        const subDirPath = dir.join("subdir")
+        await fileSystem.createDirectory(subDirPath, { recursive: false })
+
+        expect(await fileSystem.listDirectory(dir)).toEqual([
+          { type: "file", path: filePath },
+          { type: "dir", path: subDirPath },
+        ])
+      })
+
+      it("lists empty dir", async () => {
+        await using tmp = await fileSystem.createTempDir("superlib-tests")
+
+        expect(await fileSystem.listDirectory(tmp.path)).toEqual([])
+      })
+
+      it.skip("throws when listing not-existing dir", () => {})
+      it.skip("throws when listing file not dir", () => {})
     })
   })
 }

@@ -1,11 +1,19 @@
 import * as pathModule from "node:path"
 
-import type { DirRemoveError, FileAccessError, FileWriteError, IFileSystem } from "./IFileSystem"
+import type {
+  DirRemoveError,
+  FileAccessError,
+  FileSystemEntity,
+  FileWriteError,
+  IFileSystem,
+} from "./IFileSystem"
 
 import { Err, Ok, type Result } from "../../basic/Result"
 import { AbsolutePath } from "./AbsolutePath"
 
 type TempDirHandle = AsyncDisposable & { path: AbsolutePath }
+
+type FsGenesis = { [path: string]: FsGenesis | string }
 
 export class MemoryFileSystem implements IFileSystem {
   private readonly files = new Map<string, string>()
@@ -14,8 +22,23 @@ export class MemoryFileSystem implements IFileSystem {
 
   private tempDirCounter = 0 // used for numbering of temp dirs
 
-  constructor() {
+  constructor(genesis: FsGenesis = {}) {
     this.directories.add(this.root.path)
+
+    this.seedFromGenesis(AbsolutePath("/"), genesis)
+  }
+
+  private seedFromGenesis(cwd: AbsolutePath, genesis: FsGenesis): void {
+    for (const [key, value] of Object.entries(genesis)) {
+      const path = cwd.join(key)
+      if (typeof value === "string") {
+        this.createDirectorySync(path.getDirPath(), { recursive: true })
+        this.writeFileSync(path, value)
+      } else {
+        this.createDirectorySync(path, { recursive: true })
+        this.seedFromGenesis(path, value)
+      }
+    }
   }
 
   async readFile(path: AbsolutePath): Promise<Result<string, FileAccessError>> {
@@ -32,7 +55,11 @@ export class MemoryFileSystem implements IFileSystem {
   }
 
   async writeFile(path: AbsolutePath, contents: string): Promise<Result<void, FileWriteError>> {
-    await this.createDirectory(path.dirname(), { recursive: true })
+    return this.writeFileSync(path, contents)
+  }
+
+  writeFileSync(path: AbsolutePath, contents: string): Result<void, FileWriteError> {
+    this.createDirectorySync(path.getDirPath(), { recursive: true })
     if (this.directories.has(path.path)) {
       return Err({ type: "fs/file-is-a-dir", path })
     }
@@ -42,10 +69,14 @@ export class MemoryFileSystem implements IFileSystem {
   }
 
   async exists(path: AbsolutePath): Promise<boolean> {
-    return this.files.has(path.path) || this.directories.has(path.path)
+    return (await this.get(path)) !== undefined
   }
 
   async createDirectory(dirPath: AbsolutePath, options: { recursive: boolean }): Promise<void> {
+    this.createDirectorySync(dirPath, options)
+  }
+
+  createDirectorySync(dirPath: AbsolutePath, options: { recursive: boolean }): void {
     if (this.directories.has(dirPath.path)) {
       if (!options.recursive) {
         throw new Error(`Directory already exists: ${dirPath.path}`)
@@ -53,7 +84,7 @@ export class MemoryFileSystem implements IFileSystem {
       return
     }
 
-    const parentPath = dirPath.dirname()
+    const parentPath = dirPath.getDirPath()
     if (!options.recursive && !this.directories.has(parentPath.path)) {
       throw new Error(`Parent directory does not exist: ${parentPath.path}`)
     }
@@ -113,6 +144,51 @@ export class MemoryFileSystem implements IFileSystem {
         removeTempDir()
       },
     }
+  }
+
+  async listDirectory(path: AbsolutePath): Promise<FileSystemEntity[]> {
+    if (!this.directories.has(path.path)) {
+      return []
+    }
+
+    const files = this.getFiles(path.path).map((path): FileSystemEntity => ({ type: "file", path }))
+    const dirs = this.getDirs(path.path).map((path): FileSystemEntity => ({ type: "dir", path }))
+
+    return [...files, ...dirs]
+  }
+
+  async get(path: AbsolutePath): Promise<FileSystemEntity | undefined> {
+    if (this.files.has(path.path)) {
+      return {
+        type: "file",
+        path,
+      }
+    }
+    if (this.directories.has(path.path)) {
+      return {
+        type: "dir",
+        path,
+      }
+    }
+    return undefined
+  }
+
+  private getFiles(dirPath: string): AbsolutePath[] {
+    return this.files
+      .keys()
+      .filter((file) => this.isWithinDir(file, dirPath))
+      .map((file) => AbsolutePath(file))
+      .toArray()
+  }
+
+  private getDirs(dirPath: string): AbsolutePath[] {
+    return this.directories
+      .keys()
+      .filter(
+        (dir) => this.isWithinDir(dir, dirPath) && dir !== dirPath, // do not include the dir itself
+      )
+      .map((dir) => AbsolutePath(dir))
+      .toArray()
   }
 
   private removeDirectoryRecursive(dirPath: string): void {
