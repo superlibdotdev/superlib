@@ -1,8 +1,24 @@
-import { access, mkdir, mkdtemp, readFile, rm, rmdir, writeFile } from "node:fs/promises"
+import {
+  access,
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  rmdir,
+  stat,
+  writeFile,
+} from "node:fs/promises"
 import { tmpdir } from "node:os"
 import * as pathModule from "node:path"
 
-import type { DirRemoveError, FileAccessError, FileWriteError, IFileSystem } from "./IFileSystem"
+import type {
+  DirRemoveError,
+  FileAccessError,
+  FileSystemEntry,
+  FileWriteError,
+  IFileSystem,
+} from "./IFileSystem"
 
 import { Ok, Result } from "../../basic/Result"
 import { ResultAsync } from "../../basic/ResultAsync"
@@ -50,6 +66,29 @@ export class FileSystem implements IFileSystem {
     } catch {
       return false
     }
+  }
+
+  async get(path: AbsolutePath): Promise<FileSystemEntry | undefined> {
+    const stats = await stat(path.path)
+    if (stats.isFile()) {
+      return { type: "file", path }
+    }
+    if (stats.isDirectory()) {
+      return { type: "dir", path }
+    }
+    return undefined
+  }
+
+  async listDirectory(path: AbsolutePath): Promise<FileSystemEntry[]> {
+    const entries = await readdir(path.path, { withFileTypes: true })
+
+    return entries.map((dirent): FileSystemEntry => {
+      const entryPath = path.join(dirent.name)
+      if (dirent.isDirectory()) {
+        return { type: "dir", path: entryPath }
+      }
+      return { type: "file", path: entryPath }
+    })
   }
 
   async createDirectory(path: AbsolutePath, options: { recursive: boolean }): Promise<void> {
