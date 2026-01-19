@@ -15,11 +15,13 @@ function parseChunk(chunk: string): GlobChunk {
   if (chunk === "**") {
     return { type: "globstar" }
   }
-  if (chunk.includes("*") || chunk.includes("?") || chunk.includes("{")) {
+  if (specialCharacters.some((c) => chunk.includes(c))) {
     return { type: "pattern", pattern: globPatternToRegex(chunk) }
   }
   return { type: "literal", value: chunk }
 }
+
+const specialCharacters = ["*", "?", "{", "["]
 
 function globPatternToRegex(globPattern: string): RegExp {
   let regexString = ""
@@ -40,6 +42,8 @@ function globPatternToRegex(globPattern: string): RegExp {
       const options = optionsString.split(",").map((s) => s.trim())
       regexString += `(${options.join("|")})`
       i = closingBracketIndex
+    } else if (c === "[") {
+      assert(false, "[] not supported yet")
     } else {
       regexString += c
     }
