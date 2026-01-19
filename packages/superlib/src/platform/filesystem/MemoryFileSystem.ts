@@ -176,7 +176,7 @@ export class MemoryFileSystem implements IFileSystem {
   private getFiles(dirPath: string): AbsolutePath[] {
     return this.files
       .keys()
-      .filter((file) => this.isWithinDir(file, dirPath))
+      .filter((file) => pathModule.dirname(file) === dirPath)
       .map((file) => AbsolutePath(file))
       .toArray()
   }
@@ -185,7 +185,7 @@ export class MemoryFileSystem implements IFileSystem {
     return this.directories
       .keys()
       .filter(
-        (dir) => this.isWithinDir(dir, dirPath) && dir !== dirPath, // do not include the dir itself
+        (dir) => pathModule.dirname(dir) === dirPath && dir !== dirPath, // do not include the dir itself
       )
       .map((dir) => AbsolutePath(dir))
       .toArray()
@@ -213,11 +213,7 @@ export class MemoryFileSystem implements IFileSystem {
       return true
     }
 
-    return (
-      !relative.startsWith(`..${pathModule.sep}`) &&
-      relative !== ".." &&
-      !pathModule.isAbsolute(relative)
-    )
+    return !relative.startsWith(`../`) && relative !== ".." && !pathModule.isAbsolute(relative)
   }
 
   private hasEntriesWithin(dirPath: string): boolean {

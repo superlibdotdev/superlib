@@ -218,14 +218,18 @@ for (const FS of fileSystems) {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
         const dir = tmp.path
 
-        const filePath = dir.join("notes.txt")
-        await fileSystem.writeFile(filePath, "hello")
-        const subDirPath = dir.join("subdir")
-        await fileSystem.createDirectory(subDirPath, { recursive: false })
+        const notesFilePath = dir.join("notes.txt")
+        await fileSystem.writeFile(notesFilePath, "hello")
+        const secretDirPath = dir.join("secret")
+        await fileSystem.createDirectory(secretDirPath, { recursive: false })
+        const secretFilePath = secretDirPath.join("secret-notes.txt")
+        await fileSystem.writeFile(secretFilePath, "goodbye")
 
-        expect(await fileSystem.listDirectory(dir)).toEqual([
-          { type: "file", path: filePath },
-          { type: "dir", path: subDirPath },
+        const result = await fileSystem.listDirectory(dir)
+
+        expect(result).toEqual([
+          { type: "file", path: notesFilePath },
+          { type: "dir", path: secretDirPath },
         ])
       })
 
