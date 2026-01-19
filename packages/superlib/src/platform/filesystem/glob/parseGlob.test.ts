@@ -21,15 +21,6 @@ describe(parseGlob.name, () => {
     ])
   })
 
-  it("parses '**/*.ts'", () => {
-    const result = parseGlob("**/*.ts")
-
-    expect(result).toEqual([
-      { type: "globstar" },
-      { type: "pattern", pattern: new RegExp("^.*\\.ts$") },
-    ])
-  })
-
   it("parses complex glob", () => {
     const result = parseGlob("dir-1/**/dir-2/use*.tsx")
 
@@ -39,5 +30,35 @@ describe(parseGlob.name, () => {
       { type: "literal", value: "dir-2" },
       { type: "pattern", pattern: new RegExp("^use.*\\.tsx$") },
     ])
+  })
+
+  describe("patterns", () => {
+    it("parses '*.ts' pattern", () => {
+      const result = parseGlob("*.ts")
+
+      expect(result).toEqual([{ type: "pattern", pattern: new RegExp("^.*\\.ts$") }])
+    })
+
+    it("parses 'note?.md' pattern", () => {
+      const result = parseGlob("note?.md") // matches note1.md, note2.md, not note.md
+
+      expect(result).toEqual([{ type: "pattern", pattern: new RegExp("^note.\\.md$") }])
+    })
+
+    it("parses '*.{ts,tsx}' pattern", () => {
+      const result = parseGlob("*.{ts,tsx}")
+
+      expect(result).toEqual([{ type: "pattern", pattern: new RegExp("^.*\\.(ts|tsx)$") }])
+    })
+
+    it("parses '*.{ts, tsx}' pattern (extra space)", () => {
+      const result = parseGlob("*.{ts, tsx}")
+
+      expect(result).toEqual([{ type: "pattern", pattern: new RegExp("^.*\\.(ts|tsx)$") }])
+    })
+
+    it("throws on mismatched pattern", () => {
+      expect(() => parseGlob("*.{ts,tsx")).toThrow("unbalanced {}")
+    })
   })
 })

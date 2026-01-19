@@ -72,6 +72,21 @@ describe(glob.name, () => {
     expect(sortByPath(results)).toMatchSnapshot()
   })
 
+  it("finds all entries with selected extensions", async () => {
+    const results = await glob(
+      {
+        cwd: AbsolutePath("/"),
+        pattern: "**/*.{tsx, jsx}",
+      },
+      fs,
+    )
+
+    expect(sortByPath(results)).toEqual([
+      { type: "file", path: AbsolutePath("/proj/lib/components/Button.jsx") },
+      { type: "file", path: AbsolutePath("/proj/lib/components/Home.tsx") },
+    ])
+  })
+
   describe("option onlyFiles", () => {
     it("returns paths for files", async () => {
       const results = await glob(

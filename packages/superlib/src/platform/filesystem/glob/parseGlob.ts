@@ -1,3 +1,5 @@
+import { assert } from "../../../basic"
+
 export type GlobChunk =
   | { type: "literal"; value: string }
   | { type: "pattern"; pattern: RegExp }
@@ -13,7 +15,7 @@ function parseChunk(chunk: string): GlobChunk {
   if (chunk === "**") {
     return { type: "globstar" }
   }
-  if (chunk.includes("*")) {
+  if (chunk.includes("*") || chunk.includes("?") || chunk.includes("{")) {
     return { type: "pattern", pattern: globPatternToRegex(chunk) }
   }
   return { type: "literal", value: chunk }
@@ -21,11 +23,23 @@ function parseChunk(chunk: string): GlobChunk {
 
 function globPatternToRegex(globPattern: string): RegExp {
   let regexString = ""
-  for (const c of globPattern) {
+  for (let i = 0; i < globPattern.length; i++) {
+    const c = globPattern[i]!
+
     if (c === "*") {
       regexString += ".*"
     } else if (c === ".") {
       regexString += "\\."
+    } else if (c === "?") {
+      regexString += "."
+    } else if (c === "{") {
+      const closingBracketIndex = globPattern.indexOf("}", i + 1)
+      assert(closingBracketIndex !== -1, `Glob pattern ${globPattern} incorrect: unbalanced {}`)
+
+      const optionsString = globPattern.slice(i + 1, closingBracketIndex)
+      const options = optionsString.split(",").map((s) => s.trim())
+      regexString += `(${options.join("|")})`
+      i = closingBracketIndex
     } else {
       regexString += c
     }
