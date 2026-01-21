@@ -90,6 +90,7 @@ async function matchGlobWalker(
 
       const results = await Task.all(
         [
+          () => matchGlobWalker(rest, cwd, fs, visited),
           ...newCwds.map((newCwd) => () => matchGlobWalker(rest, newCwd, fs, visited)), // without nesting
           ...newCwds.map((newCwd) => () => matchGlobWalker(chunks, newCwd, fs, visited)), // with nesting
         ],

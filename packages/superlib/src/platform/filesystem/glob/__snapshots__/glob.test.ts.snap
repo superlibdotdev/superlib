@@ -4,6 +4,12 @@ exports[`glob finds all entries with '**' 1`] = `
 [
   {
     "path": AbsolutePathClazz {
+      "path": "/",
+    },
+    "type": "dir",
+  },
+  {
+    "path": AbsolutePathClazz {
       "path": "/.gitignore",
     },
     "type": "file",

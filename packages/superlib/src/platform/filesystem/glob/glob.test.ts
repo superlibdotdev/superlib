@@ -101,6 +101,20 @@ describe(glob.name, () => {
       expect(results).toEqual([AbsolutePath("/proj/lib/components/Home.tsx")])
     })
   })
+
+  it("should match files at the current directory level with globstar", async () => {
+    const results = await glob(
+      {
+        pattern: "**/*.ts",
+        cwd: AbsolutePath("/tmp/another-proj"),
+      },
+      fs,
+    )
+
+    const paths = sortByPath(results).map((e) => e.path.path)
+
+    expect(paths).toEqual(["/tmp/another-proj/index.ts"])
+  })
 })
 
 function sortByPath(results: FileSystemEntry[]): FileSystemEntry[] {
