@@ -41,11 +41,11 @@ async function matchGlobWalker(
   fs: IFileSystem,
   visited: Set<string>,
 ): Promise<FileSystemEntry[]> {
+  const cwdEntry = await fs.get(cwd)
+  assert(!!cwdEntry, `${cwd.path} does not exist`)
+
   const [chunk, ...rest] = chunks
   if (!chunk) {
-    const cwdEntity = await fs.get(cwd)
-    assert(!!cwdEntity, `${cwd.path} does not exist`)
-
     // @note: it's important that writing and checking 'visited' happens is not interrupted by async operation
     const alreadyVisited = visited.has(cwd.path)
     if (alreadyVisited) {
@@ -53,7 +53,11 @@ async function matchGlobWalker(
     }
 
     visited.add(cwd.path)
-    return [cwdEntity]
+    return [cwdEntry]
+  }
+
+  if (cwdEntry.type === "file") {
+    return []
   }
 
   switch (chunk.type) {
@@ -66,7 +70,7 @@ async function matchGlobWalker(
     }
 
     case "pattern": {
-      const entities = await fs.listDirectory(cwd)
+      const entities = (await fs.listDirectory(cwd)).unwrap()
 
       const newCwds = entities
         .filter((entity) => chunk.pattern.test(entity.path.getName()))
@@ -80,7 +84,7 @@ async function matchGlobWalker(
     }
 
     case "globstar": {
-      const entities = await fs.listDirectory(cwd)
+      const entities = (await fs.listDirectory(cwd)).unwrap()
 
       const newCwds = entities.map((m) => m.path)
 

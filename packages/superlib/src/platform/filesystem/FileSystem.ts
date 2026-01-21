@@ -13,6 +13,7 @@ import { tmpdir } from "node:os"
 import * as pathModule from "node:path"
 
 import type {
+  DirAccessError,
   DirRemoveError,
   FileAccessError,
   FileSystemEntry,
@@ -20,7 +21,7 @@ import type {
   IFileSystem,
 } from "./IFileSystem"
 
-import { Ok, Result } from "../../basic/Result"
+import { Err, Ok, Result } from "../../basic/Result"
 import { ResultAsync } from "../../basic/ResultAsync"
 import { AbsolutePath } from "./AbsolutePath"
 
@@ -69,26 +70,44 @@ export class FileSystem implements IFileSystem {
   }
 
   async get(path: AbsolutePath): Promise<FileSystemEntry | undefined> {
-    const stats = await stat(path.path)
-    if (stats.isFile()) {
-      return { type: "file", path }
+    try {
+      const stats = await stat(path.path)
+      if (stats.isFile()) {
+        return { type: "file", path }
+      }
+      if (stats.isDirectory()) {
+        return { type: "dir", path }
+      }
+    } catch (error) {
+      if (error instanceof Error && "code" in error) {
+        switch (error.code) {
+          case "ENOENT":
+            return undefined
+        }
+      }
+      throw error
     }
-    if (stats.isDirectory()) {
-      return { type: "dir", path }
-    }
-    return undefined
   }
 
-  async listDirectory(path: AbsolutePath): Promise<FileSystemEntry[]> {
+  async listDirectory(path: AbsolutePath): Promise<Result<FileSystemEntry[], DirAccessError>> {
+    const entry = await this.get(path)
+    if (entry === undefined) {
+      return Err({ type: "fs/dir-not-found", path })
+    }
+    if (entry.type === "file") {
+      return Err({ type: "fs/not-a-dir", path })
+    }
     const entries = await readdir(path.path, { withFileTypes: true })
 
-    return entries.map((dirent): FileSystemEntry => {
-      const entryPath = path.join(dirent.name)
-      if (dirent.isDirectory()) {
-        return { type: "dir", path: entryPath }
-      }
-      return { type: "file", path: entryPath }
-    })
+    return Ok(
+      entries.map((dirent): FileSystemEntry => {
+        const entryPath = path.join(dirent.name)
+        if (dirent.isDirectory()) {
+          return { type: "dir", path: entryPath }
+        }
+        return { type: "file", path: entryPath }
+      }),
+    )
   }
 
   async createDirectory(path: AbsolutePath, options: { recursive: boolean }): Promise<void> {
@@ -108,12 +127,11 @@ export class FileSystem implements IFileSystem {
             switch (error.code) {
               case "ENOENT":
                 return { type: "fs/dir-not-found", path }
+              case "ENOTDIR":
+                return { type: "fs/not-a-dir", path }
             }
           }
-          return {
-            type: "fs/other",
-            cause: error,
-          }
+          throw error
         },
       ).toPromise()
     }
@@ -133,12 +151,12 @@ export class FileSystem implements IFileSystem {
                 return { type: "fs/dir-not-found", path }
               }
             }
+            case "ENOTDIR": {
+              return { type: "fs/not-a-dir", path }
+            }
           }
         }
-        return {
-          type: "fs/other",
-          cause: error,
-        }
+        throw error
       },
     ).toPromise()
   }

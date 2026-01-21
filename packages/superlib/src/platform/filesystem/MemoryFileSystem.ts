@@ -1,6 +1,7 @@
 import * as pathModule from "node:path"
 
 import type {
+  DirAccessError,
   DirRemoveError,
   FileAccessError,
   FileSystemEntry,
@@ -108,6 +109,10 @@ export class MemoryFileSystem implements IFileSystem {
     dirPath: AbsolutePath,
     options: { recursive: boolean; force: boolean },
   ): Promise<Result<void, DirRemoveError>> {
+    if (this.files.has(dirPath.path)) {
+      return Err({ type: "fs/not-a-dir", path: dirPath })
+    }
+
     if (!this.directories.has(dirPath.path)) {
       if (options.force) {
         return Ok()
@@ -146,15 +151,18 @@ export class MemoryFileSystem implements IFileSystem {
     }
   }
 
-  async listDirectory(path: AbsolutePath): Promise<FileSystemEntry[]> {
+  async listDirectory(path: AbsolutePath): Promise<Result<FileSystemEntry[], DirAccessError>> {
+    if (this.files.has(path.path)) {
+      return Err({ type: "fs/not-a-dir", path })
+    }
     if (!this.directories.has(path.path)) {
-      return []
+      return Err({ type: "fs/dir-not-found", path })
     }
 
     const files = this.getFiles(path.path).map((path): FileSystemEntry => ({ type: "file", path }))
     const dirs = this.getDirs(path.path).map((path): FileSystemEntry => ({ type: "dir", path }))
 
-    return [...files, ...dirs]
+    return Ok([...files, ...dirs])
   }
 
   async get(path: AbsolutePath): Promise<FileSystemEntry | undefined> {

@@ -10,7 +10,7 @@ export interface IFileSystem {
     path: AbsolutePath,
     options: { recursive: boolean; force: boolean },
   ): Promise<Result<void, DirRemoveError>>
-  listDirectory(path: AbsolutePath): Promise<FileSystemEntry[]>
+  listDirectory(path: AbsolutePath): Promise<Result<FileSystemEntry[], DirAccessError>>
 
   get(path: AbsolutePath): Promise<FileSystemEntry | undefined>
   exists(path: AbsolutePath): Promise<boolean>
@@ -58,8 +58,8 @@ export type DirAccessError =
       path: AbsolutePath
     }
   | {
-      type: "fs/other"
-      cause: unknown
+      type: "fs/not-a-dir"
+      path: AbsolutePath
     }
 
 export type DirRemoveError = DirAccessError | { type: "fs/dir-not-empty"; path: AbsolutePath }
