@@ -184,16 +184,16 @@ describe(`${all.name}`, () => {
 
     describe("error handling", () => {
       it("throws on invalid concurrency values", () => {
-        expect(() => allWithArray([], { concurrency: 0 })).toThrow(
+        expect(allWithArray([], { concurrency: 0 })).rejects.toThrow(
           "options.concurrency must be a positive integer",
         )
-        expect(() => allWithArray([], { concurrency: -1 })).toThrow(
+        expect(allWithArray([], { concurrency: -1 })).rejects.toThrow(
           "options.concurrency must be a positive integer",
         )
-        expect(() => allWithArray([], { concurrency: Number.NaN })).toThrow(
+        expect(allWithArray([], { concurrency: Number.NaN })).rejects.toThrow(
           "options.concurrency must be a positive integer",
         )
-        expect(() => allWithArray([], { concurrency: 5.5 })).toThrow(
+        expect(allWithArray([], { concurrency: 5.5 })).rejects.toThrow(
           "options.concurrency must be a positive integer",
         )
       })
@@ -429,16 +429,16 @@ describe(`${all.name}`, () => {
 
     describe("error handling", () => {
       it("throws on invalid batch size values", () => {
-        expect(() => allWithArray([], { concurrency: "batches-of-0" })).toThrow(
+        expect(allWithArray([], { concurrency: "batches-of-0" })).rejects.toThrow(
           "options.concurrency must be a positive integer",
         )
-        expect(() => allWithArray([], { concurrency: "batches-of--1" })).toThrow(
+        expect(allWithArray([], { concurrency: "batches-of--1" })).rejects.toThrow(
           "options.concurrency must be a positive integer",
         )
-        expect(() => allWithArray([], { concurrency: "batches-of-NaN" as any })).toThrow(
+        expect(allWithArray([], { concurrency: "batches-of-NaN" as any })).rejects.toThrow(
           "options.concurrency must be a positive integer",
         )
-        expect(() => allWithArray([], { concurrency: "batches-of-5.5" })).toThrow(
+        expect(allWithArray([], { concurrency: "batches-of-5.5" })).rejects.toThrow(
           "options.concurrency must be a positive integer",
         )
       })

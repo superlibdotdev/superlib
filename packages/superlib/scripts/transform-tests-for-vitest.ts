@@ -93,6 +93,75 @@ function transformContent(content: string): string {
     "await clock.advanceTimersByTimeAsync(",
   )
 
+  // In vitest, expect().rejects returns a Promise and needs await
+  // In Bun, it doesn't. Add await before expect() when .rejects is used.
+  // Also need to make the test function async if it isn't already.
+  const lines = content.split("\n")
+  let inTestBlock = false
+  let testBlockHasRejects = false
+  let testBlockStartLine = -1
+
+  // First pass: identify test blocks that need to be async
+  const testBlocksNeedingAsync: number[] = []
+  let braceDepth = 0
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!
+
+    // Detect start of a test block: it("...", () => { or it("...", function() {
+    if (line.match(/it\s*\([^,]+,\s*\(\)\s*=>\s*\{/) && !line.includes("async")) {
+      inTestBlock = true
+      testBlockStartLine = i
+      testBlockHasRejects = false
+      braceDepth = 1
+      if (line.includes(".rejects.")) {
+        testBlockHasRejects = true
+      }
+      continue
+    }
+
+    if (inTestBlock) {
+      // Count braces to track block depth
+      for (const char of line) {
+        if (char === "{") braceDepth++
+        if (char === "}") braceDepth--
+      }
+
+      if (line.includes(".rejects.")) {
+        testBlockHasRejects = true
+      }
+
+      // End of test block
+      if (braceDepth === 0) {
+        if (testBlockHasRejects) {
+          testBlocksNeedingAsync.push(testBlockStartLine)
+        }
+        inTestBlock = false
+      }
+    }
+  }
+
+  // Second pass: make identified test blocks async and add await to .rejects
+  content = lines
+    .map((line, index) => {
+      // Make test function async if needed
+      if (testBlocksNeedingAsync.includes(index)) {
+        line = line.replace(/it\s*\(([^,]+),\s*\(\)\s*=>/, "it($1, async () =>")
+      }
+
+      // Add await before expect().rejects
+      if (
+        line.includes("expect(") &&
+        line.includes(".rejects.") &&
+        !line.includes("await expect(")
+      ) {
+        line = line.replace(/(\s*)expect\(/, "$1await expect(")
+      }
+
+      return line
+    })
+    .join("\n")
+
   return content
 }
 
