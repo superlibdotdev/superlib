@@ -55,7 +55,7 @@
     "lint": "oxlint --type-aware --type-check --deny-warnings",
     "lint:fix": "bun run lint --fix",
     "test": "bun test",
-    "test:node": "bun run scripts/transform-tests-for-vitest.ts && vitest run; find src -name '*.vitest.test.ts' -delete",
+    "test:node": "bun run scripts/transform-tests-for-vitest.ts && vitest run",
     "fix": "cd ../.. && bun run fix"
   },
   "dependencies": {

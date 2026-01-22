@@ -8,7 +8,7 @@
  * - mock( → vi.fn(
  * - spyOn( → vi.spyOn(
  *
- * Output files have .vitest.test.ts suffix instead of .test.ts
+ * Output files have .vitest.ts suffix (Bun ignores these)
  */
 
 import { readdir, readFile, writeFile } from "node:fs/promises"
@@ -24,7 +24,7 @@ async function findTestFiles(dir: string): Promise<string[]> {
     const fullPath = join(dir, entry.name)
     if (entry.isDirectory()) {
       files.push(...(await findTestFiles(fullPath)))
-    } else if (entry.name.endsWith(".test.ts") && !entry.name.endsWith(".vitest.test.ts")) {
+    } else if (entry.name.endsWith(".test.ts") && !entry.name.endsWith(".vitest.ts")) {
       files.push(fullPath)
     }
   }
@@ -102,7 +102,7 @@ async function main(): Promise<void> {
     const content = await readFile(file, "utf-8")
     const transformed = transformContent(content)
 
-    const outputPath = file.replace(/\.test\.ts$/, ".vitest.test.ts")
+    const outputPath = file.replace(/\.test\.ts$/, ".vitest.ts")
     await writeFile(outputPath, transformed)
 
     console.log(`  ${relative(SRC_DIR, file)} -> ${relative(SRC_DIR, outputPath)}`)
