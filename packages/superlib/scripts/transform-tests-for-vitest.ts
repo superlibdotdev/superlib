@@ -72,7 +72,10 @@ function transformContent(content: string): string {
   // Transform Bun-specific matchers to vitest equivalents
   content = content.replace(/\.toBeTrue\(\)/g, ".toBe(true)")
   content = content.replace(/\.toBeFalse\(\)/g, ".toBe(false)")
-  content = content.replace(/\.toBeBoolean\(\)/g, '.toSatisfy((v: unknown) => typeof v === "boolean")')
+  content = content.replace(
+    /\.toBeBoolean\(\)/g,
+    '.toSatisfy((v: unknown) => typeof v === "boolean")',
+  )
   content = content.replace(/\.toBeInteger\(\)/g, ".toSatisfy(Number.isInteger)")
 
   // Transform toBeWithin(min, max) to use toSatisfy
