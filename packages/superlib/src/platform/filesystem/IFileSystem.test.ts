@@ -6,7 +6,7 @@ import { Err, Ok } from "../../basic/Result"
 import { FileSystem } from "./FileSystem"
 import { MemoryFileSystem } from "./MemoryFileSystem"
 
-const fileSystems = [FileSystem, MemoryFileSystem]
+const fileSystems = [MemoryFileSystem, FileSystem]
 
 for (const FS of fileSystems) {
   const fileSystem = new FS() as IFileSystem
@@ -64,6 +64,8 @@ for (const FS of fileSystems) {
 
         expect(await fileSystem.readFile(filePath)).toEqual(Ok("second"))
       })
+
+      it.skip("throws when writing file to non-existing dir", () => {})
     })
 
     describe(FS.prototype.exists.name, () => {
@@ -159,6 +161,16 @@ for (const FS of fileSystems) {
         )
       })
 
+      it("throw when not a directory", async () => {
+        await using tmp = await fileSystem.createTempDir("superlib-tests")
+        const filePath = tmp.path.join("file.txt")
+        await fileSystem.writeFile(filePath, "hello world!")
+
+        expect(
+          await fileSystem.removeDirectory(filePath, { recursive: false, force: false }),
+        ).toEqual(Err({ type: "fs/not-a-dir", path: filePath }))
+      })
+
       it("does not throw when directory is missing and force is true", async () => {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
         const dir = tmp.path.join("missing")
@@ -183,6 +195,77 @@ for (const FS of fileSystems) {
         await tempDir[Symbol.asyncDispose]()
         expect(await fileSystem.exists(tempDir.path)).toBeFalse()
         expect(await fileSystem.exists(filename)).toBeFalse()
+      })
+    })
+
+    describe(FS.prototype.get.name, () => {
+      it("gets existing file", async () => {
+        await using tmp = await fileSystem.createTempDir("superlib-tests")
+        const dir = tmp.path
+        const filePath = dir.join("notes.txt")
+        await fileSystem.writeFile(filePath, "hello")
+
+        expect(await fileSystem.get(filePath)).toEqual({ type: "file", path: filePath })
+      })
+
+      it("gets existing dir", async () => {
+        await using tmp = await fileSystem.createTempDir("superlib-tests")
+
+        expect(await fileSystem.get(tmp.path)).toEqual({ type: "dir", path: tmp.path })
+      })
+
+      it("returns undefined for not existing", async () => {
+        await using tmp = await fileSystem.createTempDir("superlib-tests")
+
+        expect(await fileSystem.get(tmp.path.join("/not-existing"))).toEqual(undefined)
+      })
+    })
+
+    describe(FS.prototype.listDirectory.name, () => {
+      it("lists non empty dir", async () => {
+        await using tmp = await fileSystem.createTempDir("superlib-tests")
+        const dir = tmp.path
+
+        const notesFilePath = dir.join("notes.txt")
+        await fileSystem.writeFile(notesFilePath, "hello")
+        const secretDirPath = dir.join("secret")
+        await fileSystem.createDirectory(secretDirPath, { recursive: false })
+        const secretFilePath = secretDirPath.join("secret-notes.txt")
+        await fileSystem.writeFile(secretFilePath, "goodbye")
+
+        const result = await fileSystem.listDirectory(dir)
+
+        expect(result).toEqual(
+          Ok([
+            { type: "file", path: notesFilePath },
+            { type: "dir", path: secretDirPath },
+          ]),
+        )
+      })
+
+      it("lists empty dir", async () => {
+        await using tmp = await fileSystem.createTempDir("superlib-tests")
+
+        expect(await fileSystem.listDirectory(tmp.path)).toEqual(Ok([]))
+      })
+
+      it("throws when listing not-existing dir", async () => {
+        await using tmp = await fileSystem.createTempDir("superlib-tests")
+
+        const path = tmp.path.join("/not-existing")
+        expect(await fileSystem.listDirectory(path)).toEqual(
+          Err({ type: "fs/dir-not-found", path }),
+        )
+      })
+
+      it("throws when listing file not dir", async () => {
+        await using tmp = await fileSystem.createTempDir("superlib-tests")
+        const filePath = tmp.path.join("file.txt")
+        await fileSystem.writeFile(filePath, "hello world!")
+
+        expect(await fileSystem.listDirectory(filePath)).toEqual(
+          Err({ type: "fs/not-a-dir", path: filePath }),
+        )
       })
     })
   })

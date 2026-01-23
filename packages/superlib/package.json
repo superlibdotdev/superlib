@@ -53,7 +53,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json && bun run scripts/fix-imports.ts && cp ../../README.md .",
     "lint": "oxlint --type-aware --type-check --deny-warnings",
-    "lint:fix": "bun run lint --fix",
+    "lint:fix": "bun run lint --fix --fix-dangerously --fix-suggestions",
     "test": "bun test",
     "test:node": "bun run scripts/transform-tests-for-vitest.ts && vitest run",
     "fix": "cd ../.. && bun run fix"

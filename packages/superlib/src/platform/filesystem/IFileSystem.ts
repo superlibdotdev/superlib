@@ -5,15 +5,28 @@ import type { AbsolutePath } from "./AbsolutePath"
 export interface IFileSystem {
   readFile(path: AbsolutePath): Promise<Result<string, FileAccessError>>
   writeFile(path: AbsolutePath, contents: string): Promise<Result<void, FileWriteError>>
-  exists(path: AbsolutePath): Promise<boolean>
   createDirectory(path: AbsolutePath, options: { recursive: boolean }): Promise<void>
   removeDirectory(
     path: AbsolutePath,
     options: { recursive: boolean; force: boolean },
   ): Promise<Result<void, DirRemoveError>>
+  listDirectory(path: AbsolutePath): Promise<Result<FileSystemEntry[], DirAccessError>>
+
+  get(path: AbsolutePath): Promise<FileSystemEntry | undefined>
+  exists(path: AbsolutePath): Promise<boolean>
 
   createTempDir(prefix: string): Promise<AsyncDisposable & { path: AbsolutePath }>
 }
+
+export type FileSystemEntry =
+  | {
+      type: "file"
+      path: AbsolutePath
+    }
+  | {
+      type: "dir"
+      path: AbsolutePath
+    }
 
 export type FileAccessError =
   | {
@@ -45,8 +58,8 @@ export type DirAccessError =
       path: AbsolutePath
     }
   | {
-      type: "fs/other"
-      cause: unknown
+      type: "fs/not-a-dir"
+      path: AbsolutePath
     }
 
 export type DirRemoveError = DirAccessError | { type: "fs/dir-not-empty"; path: AbsolutePath }

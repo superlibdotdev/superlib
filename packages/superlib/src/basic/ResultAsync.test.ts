@@ -4,8 +4,8 @@ import { Err, Ok, Result } from "./Result"
 import { ResultAsync } from "./ResultAsync"
 
 describe(ResultAsync.name, () => {
-  it("works", async () => {
-    // @todo rewrite these tests
+  // @todo rewrite these tests
+  it.skip("works", async () => {
     const result = await simpleSafeFetch("https://jsonplaceholder.typicode.com/todos/1")
 
     expect(result).toEqual(
