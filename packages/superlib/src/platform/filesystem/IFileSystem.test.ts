@@ -217,7 +217,7 @@ for (const FS of fileSystems) {
       it("returns undefined for not existing", async () => {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
 
-        expect(await fileSystem.get(tmp.path.join("not-existing"))).toEqual(undefined)
+        expect(await fileSystem.get(tmp.path.join("/not-existing"))).toEqual(undefined)
       })
     })
 
