@@ -12,8 +12,8 @@ export type TimeoutErr = { type: "timeout"; timeout: Temporal.Duration }
 
 type TimeoutAsResult<Return, Options> = Options extends { useResult: true }
   ? Return extends Result<infer V, infer E>
-  ? Result<V, E | TimeoutErr>
-  : never
+    ? Result<V, E | TimeoutErr>
+    : never
   : Return
 // @todo: force useResult if return type is Result
 
