@@ -60,5 +60,13 @@ describe(parseGlob.name, () => {
     it("throws on mismatched pattern", () => {
       expect(() => parseGlob("*.{ts,tsx")).toThrow("unbalanced {}")
     })
+
+    it("escapes special characters in brace options", () => {
+      const result = parseGlob("file.{foo.bar,baz+qux}")
+
+      expect(result).toEqual([
+        { type: "pattern", pattern: new RegExp("^file\\.(foo\\.bar|baz\\+qux)$") },
+      ])
+    })
   })
 })

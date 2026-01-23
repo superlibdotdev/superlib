@@ -39,7 +39,7 @@ function globPatternToRegex(globPattern: string): RegExp {
       assert(closingBracketIndex !== -1, `Glob pattern ${globPattern} incorrect: unbalanced {}`)
 
       const optionsString = globPattern.slice(i + 1, closingBracketIndex)
-      const options = optionsString.split(",").map((s) => s.trim())
+      const options = optionsString.split(",").map((s) => escapeRegex(s.trim()))
       regexString += `(${options.join("|")})`
       i = closingBracketIndex
     } else if (c === "[") {
@@ -50,6 +50,10 @@ function globPatternToRegex(globPattern: string): RegExp {
   }
 
   return new RegExp(`^${regexString}$`)
+}
+
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
 
 function combineLiteralChunks(chunks: GlobChunk[]): GlobChunk[] {
