@@ -3,7 +3,7 @@ import { describe, expect, it } from "bun:test"
 import type { IFileSystem } from "./IFileSystem"
 
 import { Err, Ok } from "../../basic/Result"
-import { AbsolutePath } from "./AbsolutePath"
+
 import { FileSystem } from "./FileSystem"
 import { MemoryFileSystem } from "./MemoryFileSystem"
 
@@ -216,7 +216,9 @@ for (const FS of fileSystems) {
       })
 
       it("returns undefined for not existing", async () => {
-        expect(await fileSystem.get(AbsolutePath("/not-existing"))).toEqual(undefined)
+        await using tmp = await fileSystem.createTempDir("superlib-tests")
+
+        expect(await fileSystem.get(tmp.path.join("not-existing"))).toEqual(undefined)
       })
     })
 
@@ -249,7 +251,9 @@ for (const FS of fileSystems) {
       })
 
       it("throws when listing not-existing dir", async () => {
-        const path = AbsolutePath("/not-existing")
+        await using tmp = await fileSystem.createTempDir("superlib-tests")
+
+        const path = tmp.path.join("/not-existing")
         expect(await fileSystem.listDirectory(path)).toEqual(
           Err({ type: "fs/dir-not-found", path }),
         )
