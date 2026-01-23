@@ -10,16 +10,20 @@ class AbsolutePathClazz {
     this.path = normalizedPath
   }
 
+  getName(): string {
+    return pathModule.basename(this.path)
+  }
+
+  getDirPath(): AbsolutePath {
+    return AbsolutePath(pathModule.dirname(this.path))
+  }
+
   join(...paths: Array<string>): AbsolutePath {
     return AbsolutePath(pathModule.join(this.path, ...paths))
   }
 
-  dirname(): AbsolutePath {
-    return AbsolutePath(pathModule.dirname(this.path))
-  }
-
   /**
-   * Note: this returns string representing relative path
+   * Note: this returns a string representing relative path
    */
   relativeFrom(root: AbsolutePath): string {
     return pathModule.relative(root.path, this.path)

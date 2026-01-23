@@ -67,17 +67,37 @@ describe(AbsolutePath.name, () => {
     })
   })
 
-  describe(AbsolutePath.prototype.dirname.name, () => {
+  describe(AbsolutePath.prototype.getDirPath.name, () => {
     it("returns the parent directory", () => {
       const path = AbsolutePath("/tmp/logs/app.log")
 
-      expect(path.dirname().path).toEqual("/tmp/logs")
+      expect(path.getDirPath().path).toEqual("/tmp/logs")
     })
 
     it("returns root for root paths", () => {
       const path = AbsolutePath("/")
 
-      expect(path.dirname().path).toEqual("/")
+      expect(path.getDirPath().path).toEqual("/")
+    })
+  })
+
+  describe(AbsolutePath.prototype.getName.name, () => {
+    it("returns name for files", () => {
+      const path = AbsolutePath("/tmp/logs/app.log")
+
+      expect(path.getName()).toEqual("app.log")
+    })
+
+    it("returns name for dirs", () => {
+      const path = AbsolutePath("/tmp")
+
+      expect(path.getName()).toEqual("tmp")
+    })
+
+    it("returns '' for root dir", () => {
+      const path = AbsolutePath("/")
+
+      expect(path.getName()).toEqual("")
     })
   })
 
