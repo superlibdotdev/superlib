@@ -3,8 +3,6 @@ import type { Task, TaskMapper } from "./types"
 import { BaseError, Err, ErrResult, Result } from "../basic"
 import { durationToMs, prettyPrintDuration, type DurationLike } from "../time"
 
-const { setTimeout, clearTimeout: cancelTimeout } = globalThis
-
 export interface TimeoutOptions {
   timeout: DurationLike
   useResult?: boolean
@@ -14,8 +12,8 @@ export type TimeoutErr = { type: "timeout"; timeout: Temporal.Duration }
 
 type TimeoutAsResult<Return, Options> = Options extends { useResult: true }
   ? Return extends Result<infer V, infer E>
-    ? Result<V, E | TimeoutErr>
-    : never
+  ? Result<V, E | TimeoutErr>
+  : never
   : Return
 // @todo: force useResult if return type is Result
 
@@ -64,7 +62,7 @@ async function runTimeout<T, O extends TimeoutOptions>(
     )) as any
   } finally {
     if (timeoutId !== undefined) {
-      cancelTimeout(timeoutId)
+      clearTimeout(timeoutId)
     }
   }
 }
