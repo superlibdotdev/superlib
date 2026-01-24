@@ -182,21 +182,19 @@ export class MemoryFileSystem implements IFileSystem {
   }
 
   private getFiles(dirPath: string): AbsolutePath[] {
-    return this.files
-      .keys()
+    // Use Array.from() instead of iterator helpers for Node 20 compatibility
+    return Array.from(this.files.keys())
       .filter((file) => pathModule.dirname(file) === dirPath)
       .map((file) => AbsolutePath(file))
-      .toArray()
   }
 
   private getDirs(dirPath: string): AbsolutePath[] {
-    return this.directories
-      .keys()
+    // Use Array.from() instead of iterator helpers for Node 20 compatibility
+    return Array.from(this.directories.keys())
       .filter(
         (dir) => pathModule.dirname(dir) === dirPath && dir !== dirPath, // do not include the dir itself
       )
       .map((dir) => AbsolutePath(dir))
-      .toArray()
   }
 
   private removeDirectoryRecursive(dirPath: string): void {
