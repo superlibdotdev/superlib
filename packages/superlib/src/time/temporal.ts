@@ -24,7 +24,7 @@ export function durationToMs(duration: Temporal.Duration): number {
 export function prettyPrintDuration(duration: Temporal.Duration): string {
   // note: in node <= 22, Intl.DurationFormat is not available
   if (typeof (Intl as any).DurationFormat === "function") {
-    return new (Intl as any).DurationFormat("en", { style: "narrow" }).format(duration)
+    return new (Intl as any).DurationFormat("en-US", { style: "narrow" }).format(duration)
   }
 
   const parts: string[] = []
