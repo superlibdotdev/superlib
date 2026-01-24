@@ -8,7 +8,7 @@
     "fmt": "oxfmt --check",
     "fmt:fix": "oxfmt",
     "lint": "bun run --workspaces lint",
-    "lint:fix": "bun run --elide-lines=0 --workspaces lint:fix",
+    "lint:fix": "bun run --workspaces lint:fix",
     "test": "bun run --workspaces test",
     "fix": "bun run lint:fix && bun run fmt:fix && bun test"
   },
