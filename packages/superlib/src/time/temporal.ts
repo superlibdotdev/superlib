@@ -22,5 +22,21 @@ export function durationToMs(duration: Temporal.Duration): number {
 }
 
 export function prettyPrintDuration(duration: Temporal.Duration): string {
-  return new (Intl as any).DurationFormat("en", { style: "narrow" }).format(duration) // @todo polyfill typings are off
+  // note: there is Intl.DurationFormat("en", { style: "narrow" }).format(duration) which should do the same thing but:
+  // 1. It's not available in node <= 22, Intl.DurationFormat is not available
+  // 2. Exact formatting output is dependent on ICU data and on some environments (CI) months get formatted as m instead of mo
+  // for these reasons it's better to always use bespoke implementation
+
+  const parts: string[] = []
+
+  if (duration.years) parts.push(`${duration.years}y`)
+  if (duration.months) parts.push(`${duration.months}mo`)
+  if (duration.weeks) parts.push(`${duration.weeks}w`)
+  if (duration.days) parts.push(`${duration.days}d`)
+  if (duration.hours) parts.push(`${duration.hours}h`)
+  if (duration.minutes) parts.push(`${duration.minutes}m`)
+  if (duration.seconds) parts.push(`${duration.seconds}s`)
+  if (duration.milliseconds) parts.push(`${duration.milliseconds}ms`)
+
+  return parts.join(" ")
 }

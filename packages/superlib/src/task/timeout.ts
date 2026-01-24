@@ -3,8 +3,6 @@ import type { Task, TaskMapper } from "./types"
 import { BaseError, Err, ErrResult, Result } from "../basic"
 import { durationToMs, prettyPrintDuration, type DurationLike } from "../time"
 
-const { setTimeout, clearTimeout: cancelTimeout } = globalThis
-
 export interface TimeoutOptions {
   timeout: DurationLike
   useResult?: boolean
@@ -64,7 +62,7 @@ async function runTimeout<T, O extends TimeoutOptions>(
     )) as any
   } finally {
     if (timeoutId !== undefined) {
-      cancelTimeout(timeoutId)
+      clearTimeout(timeoutId)
     }
   }
 }

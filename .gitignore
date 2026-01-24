@@ -26,3 +26,6 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 *.tsbuildinfo
 # same as /README.md
 /packages/superlib/README.md
+
+# Generated vitest test files
+*.test-vitest.ts

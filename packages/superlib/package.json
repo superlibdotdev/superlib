@@ -55,6 +55,7 @@
     "lint": "oxlint --type-aware --type-check --deny-warnings",
     "lint:fix": "bun run lint --fix --fix-dangerously --fix-suggestions",
     "test": "bun test",
+    "test:vitest": "bun run scripts/transform-tests-for-vitest.ts && vitest run",
     "fix": "cd ../.. && bun run fix"
   },
   "dependencies": {
@@ -63,6 +64,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "vitest": "^3.0.0",
     "zod": "^4.3.5"
   }
 }

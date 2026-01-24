@@ -5,6 +5,21 @@ import type { Task } from "./types"
 import { sleep } from "../time/sleep"
 import { all, allWithArray } from "./all"
 
+// Polyfill for PromiseWithResolvers for Node 20 compatibility
+function PromiseWithResolvers<T>(): {
+  promise: Promise<T>
+  resolve: (value: T) => void
+  reject: (reason?: unknown) => void
+} {
+  let resolve!: (value: T) => void
+  let reject!: (reason?: unknown) => void
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res
+    reject = rej
+  })
+  return { promise, resolve, reject }
+}
+
 describe(`${all.name}`, () => {
   let clock: typeof vi
   beforeEach(() => {
@@ -184,16 +199,16 @@ describe(`${all.name}`, () => {
 
     describe("error handling", () => {
       it("throws on invalid concurrency values", () => {
-        expect(() => allWithArray([], { concurrency: 0 })).toThrow(
+        expect(allWithArray([], { concurrency: 0 })).rejects.toThrow(
           "options.concurrency must be a positive integer",
         )
-        expect(() => allWithArray([], { concurrency: -1 })).toThrow(
+        expect(allWithArray([], { concurrency: -1 })).rejects.toThrow(
           "options.concurrency must be a positive integer",
         )
-        expect(() => allWithArray([], { concurrency: Number.NaN })).toThrow(
+        expect(allWithArray([], { concurrency: Number.NaN })).rejects.toThrow(
           "options.concurrency must be a positive integer",
         )
-        expect(() => allWithArray([], { concurrency: 5.5 })).toThrow(
+        expect(allWithArray([], { concurrency: 5.5 })).rejects.toThrow(
           "options.concurrency must be a positive integer",
         )
       })
@@ -222,7 +237,7 @@ describe(`${all.name}`, () => {
       it("allows already-running tasks to finish after rejection", async () => {
         const error = new Error("nope")
         let runningFinished = false
-        const { promise: finishPromise, resolve: allowFinish } = Promise.withResolvers()
+        const { promise: finishPromise, resolve: allowFinish } = PromiseWithResolvers<void>()
 
         const tasks: Task<number>[] = [
           async () => {
@@ -252,7 +267,7 @@ describe(`${all.name}`, () => {
 
   describe(`${allWithArray.name} with "unbounded" concurrency`, () => {
     it("executes all tasks at the same time", async () => {
-      const { promise: gate, resolve: openGate } = Promise.withResolvers<void>()
+      const { promise: gate, resolve: openGate } = PromiseWithResolvers<void>()
       const total = 5
       let active = 0
       let maxActive = 0
@@ -429,16 +444,16 @@ describe(`${all.name}`, () => {
 
     describe("error handling", () => {
       it("throws on invalid batch size values", () => {
-        expect(() => allWithArray([], { concurrency: "batches-of-0" })).toThrow(
+        expect(allWithArray([], { concurrency: "batches-of-0" })).rejects.toThrow(
           "options.concurrency must be a positive integer",
         )
-        expect(() => allWithArray([], { concurrency: "batches-of--1" })).toThrow(
+        expect(allWithArray([], { concurrency: "batches-of--1" })).rejects.toThrow(
           "options.concurrency must be a positive integer",
         )
-        expect(() => allWithArray([], { concurrency: "batches-of-NaN" as any })).toThrow(
+        expect(allWithArray([], { concurrency: "batches-of-NaN" as any })).rejects.toThrow(
           "options.concurrency must be a positive integer",
         )
-        expect(() => allWithArray([], { concurrency: "batches-of-5.5" })).toThrow(
+        expect(allWithArray([], { concurrency: "batches-of-5.5" })).rejects.toThrow(
           "options.concurrency must be a positive integer",
         )
       })
