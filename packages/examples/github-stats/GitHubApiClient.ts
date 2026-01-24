@@ -1,8 +1,5 @@
 import { Err, ErrResult, Ok, type Result } from "superlib"
-import {
-  JsonHttpClient,
-  type JsonHttpClientError,
-} from "superlib/platform/JsonHttpClient"
+import { JsonHttpClient, type JsonHttpClientError } from "superlib/platform/JsonHttpClient"
 import { makeSafeFetch } from "superlib/platform/safeFetch"
 import { z } from "zod"
 
