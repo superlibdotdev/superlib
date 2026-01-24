@@ -22,10 +22,10 @@ export function durationToMs(duration: Temporal.Duration): number {
 }
 
 export function prettyPrintDuration(duration: Temporal.Duration): string {
-  // note: in node <= 22, Intl.DurationFormat is not available
-  if (typeof (Intl as any).DurationFormat === "function") {
-    return new (Intl as any).DurationFormat("en-US", { style: "narrow" }).format(duration)
-  }
+  // note: there is Intl.DurationFormat("en", { style: "narrow" }).format(duration) which should do the same thing but:
+  // 1. It's not available in node <= 22, Intl.DurationFormat is not available
+  // 2. Exact formatting output is dependent on ICU data and on some environments (CI) months get formatted as m instead of mo
+  // for these reasons it's better to always use bespoke implementation
 
   const parts: string[] = []
 
