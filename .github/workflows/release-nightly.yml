@@ -64,6 +64,6 @@ jobs:
 
           Install with:
           \`\`\`bash
-          npm install @superlibdotdev/superlib@nightly
+          npm install superlib@nightly
           \`\`\`
           EOF

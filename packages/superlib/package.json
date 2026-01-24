@@ -1,5 +1,5 @@
 {
-  "name": "@superlibdotdev/superlib",
+  "name": "superlib",
   "version": "0.1.0",
   "description": "A missing standard library for TypeScript, providing utilities for async orchestration, error handling, filesystem abstraction, and common patterns",
   "keywords": [
