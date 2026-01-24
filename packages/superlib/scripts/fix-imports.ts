@@ -2,8 +2,6 @@
  * Post-build script to add .js extensions to relative imports in compiled output.
  * Required for Deno compatibility.
  */
-import { join } from "node:path"
-
 import type { IFileSystem } from "../src/platform/filesystem/IFileSystem"
 
 import { AbsolutePath } from "../src/platform/filesystem/AbsolutePath"
@@ -19,12 +17,7 @@ export async function fixImportsInDirectory(distDir: AbsolutePath, fs: IFileSyst
 }
 
 async function fixImportsInFile(filePath: AbsolutePath, fs: IFileSystem): Promise<void> {
-  const contentResult = await fs.readFile(filePath)
-  if (!contentResult.isOk()) {
-    return
-  }
-
-  const content = contentResult.value
+  const content = (await fs.readFile(filePath)).unwrap()
   const fileDir = filePath.getDirPath()
 
   const importRegex = /from\s+["'](\.[^"']+)["']/g
@@ -46,11 +39,11 @@ async function fixImportsInFile(filePath: AbsolutePath, fs: IFileSystem): Promis
   }
 
   if (fixed !== content) {
-    await fs.writeFile(filePath, fixed)
+    ;(await fs.writeFile(filePath, fixed)).unwrap()
   }
 }
 
 if (import.meta.main) {
-  const distDir = AbsolutePath(join(import.meta.dirname, "../dist"))
+  const distDir = AbsolutePath(import.meta.dirname).join("../dist")
   await fixImportsInDirectory(distDir, new FileSystem())
 }

@@ -7,7 +7,6 @@ import { fixImportsInDirectory } from "./fix-imports"
 
 describe(fixImportsInDirectory.name, () => {
   it("adds .js extensions to relative imports and /index.js for directories", async () => {
-    // Arrange
     const fs = new MemoryFileSystem({
       dist: {
         "index.js": `import { foo } from "./utils"
@@ -23,10 +22,8 @@ import data from "./data.json"`,
       },
     })
 
-    // Act
     await fixImportsInDirectory(AbsolutePath("/dist"), fs)
 
-    // Assert
     expect(await fs.readFile(AbsolutePath("/dist/index.js"))).toEqual(
       Ok(`import { foo } from "./utils.js"
 import { bar } from "./already.js"
