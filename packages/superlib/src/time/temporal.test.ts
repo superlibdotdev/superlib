@@ -87,4 +87,58 @@ describe(prettyPrintDuration.name, () => {
       "1m 30s",
     )
   })
+
+  it("formats milliseconds", () => {
+    expect(prettyPrintDuration(Temporal.Duration.from({ milliseconds: 500 }))).toEqual("500ms")
+  })
+
+  it("formats hours", () => {
+    expect(prettyPrintDuration(Temporal.Duration.from({ hours: 3 }))).toEqual("3h")
+  })
+
+  it("formats days", () => {
+    expect(prettyPrintDuration(Temporal.Duration.from({ days: 5 }))).toEqual("5d")
+  })
+
+  it("formats weeks", () => {
+    expect(prettyPrintDuration(Temporal.Duration.from({ weeks: 2 }))).toEqual("2w")
+  })
+
+  it("formats months", () => {
+    expect(prettyPrintDuration(Temporal.Duration.from({ months: 4 }))).toEqual("4mo")
+  })
+
+  it("formats years", () => {
+    expect(prettyPrintDuration(Temporal.Duration.from({ years: 1 }))).toEqual("1y")
+  })
+
+  it("formats hours, minutes, and seconds", () => {
+    expect(
+      prettyPrintDuration(Temporal.Duration.from({ hours: 2, minutes: 30, seconds: 45 })),
+    ).toEqual("2h 30m 45s")
+  })
+
+  it("formats days and hours", () => {
+    expect(prettyPrintDuration(Temporal.Duration.from({ days: 1, hours: 12 }))).toEqual("1d 12h")
+  })
+
+  it("formats seconds and milliseconds", () => {
+    expect(prettyPrintDuration(Temporal.Duration.from({ seconds: 5, milliseconds: 250 }))).toEqual(
+      "5s 250ms",
+    )
+  })
+
+  it("formats years, months, and days", () => {
+    expect(prettyPrintDuration(Temporal.Duration.from({ years: 2, months: 6, days: 15 }))).toEqual(
+      "2y 6mo 15d",
+    )
+  })
+
+  it("formats zero duration as empty string", () => {
+    expect(prettyPrintDuration(Temporal.Duration.from({ seconds: 0 }))).toEqual("")
+  })
+
+  it("does not compact values by default", () => {
+    expect(prettyPrintDuration(Temporal.Duration.from({ minutes: 60 }))).toEqual("60m")
+  })
 })
