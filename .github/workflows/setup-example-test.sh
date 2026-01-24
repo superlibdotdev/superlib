@@ -9,5 +9,5 @@ cd -
 TARBALL=$(ls packages/superlib/*superlib-*.tgz)
 cp -r packages/examples /tmp/example-test
 cd /tmp/example-test
-sed -i 's|"@superlibdotdev/superlib": "workspace:\*"|"@superlibdotdev/superlib": "file:'"$GITHUB_WORKSPACE"'/'"$TARBALL"'"|' package.json
+sed -i 's|"superlib": "workspace:\*"|"superlib": "file:'"$GITHUB_WORKSPACE"'/'"$TARBALL"'"|' package.json
 eval "$INSTALL_CMD"

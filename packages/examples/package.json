@@ -11,8 +11,8 @@
     "fix": "cd ../.. && bun run fix"
   },
   "dependencies": {
-    "@superlibdotdev/superlib": "workspace:*",
     "remeda": "^2.32.0",
+    "superlib": "workspace:*",
     "zod": "^4.3.5"
   }
 }

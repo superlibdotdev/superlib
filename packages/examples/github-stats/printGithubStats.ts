@@ -1,5 +1,5 @@
-import { Task } from "@superlibdotdev/superlib"
 import { zip } from "remeda"
+import { Task } from "superlib"
 
 import { type GitHubApiClient } from "./GitHubApiClient"
 

@@ -5,7 +5,7 @@ Missing standard library for TypeScript
 ## Install
 
 ```sh
-npm install @superlibdotdev/superlib
+npm install superlib
 ```
 
 ## Features:
