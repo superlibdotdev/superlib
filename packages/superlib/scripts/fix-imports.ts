@@ -2,11 +2,7 @@
  * Post-build script to add .js extensions to relative imports in compiled output.
  * Required for Deno compatibility.
  */
-import type { IFileSystem } from "../src/platform/filesystem/IFileSystem"
-
-import { AbsolutePath } from "../src/platform/filesystem/AbsolutePath"
-import { FileSystem } from "../src/platform/filesystem/FileSystem"
-import { glob } from "../src/platform/filesystem/glob/glob"
+import { AbsolutePath, FileSystem, glob, type IFileSystem } from "../src/platform/filesystem"
 
 export async function fixImportsInDirectory(distDir: AbsolutePath, fs: IFileSystem): Promise<void> {
   const jsFiles = await glob({ pattern: "**/*.js", cwd: distDir, onlyFiles: true }, fs)

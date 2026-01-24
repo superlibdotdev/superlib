@@ -1,8 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
 import { Ok } from "../src/basic"
-import { AbsolutePath } from "../src/platform/filesystem/AbsolutePath"
-import { MemoryFileSystem } from "../src/platform/filesystem/MemoryFileSystem"
+import { AbsolutePath, MemoryFileSystem } from "../src/platform/filesystem"
 import { fixImportsInDirectory } from "./fix-imports"
 
 describe(fixImportsInDirectory.name, () => {
