@@ -36,9 +36,8 @@ export function memoize<TArg, TResult>(
 
   return (arg: TArg): TResult => {
     const key = keySerializer(arg)
-    const cached = cache.get(key)
-    if (cached !== undefined) {
-      return cached
+    if (cache.has(key)) {
+      return cache.get(key) as TResult
     }
     const result = fn(arg)
     cache.set(key, result)

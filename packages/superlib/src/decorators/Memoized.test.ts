@@ -72,6 +72,22 @@ describe(memoize.name, () => {
     expect(double(5)).toBe(10)
     expect(callCount).toBe(2)
   })
+
+  it("caches undefined values correctly", () => {
+    let callCount = 0
+    const maybeFind = memoize(
+      (key: string): string | undefined => {
+        callCount++
+        return key === "exists" ? "found" : undefined
+      },
+      (key) => key,
+    )
+
+    expect(maybeFind("missing")).toBeUndefined()
+    expect(maybeFind("missing")).toBeUndefined()
+    expect(maybeFind("exists")).toBe("found")
+    expect(callCount).toBe(2)
+  })
 })
 
 describe(Memoized.name, () => {
