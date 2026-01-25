@@ -111,4 +111,78 @@ describe(AbsolutePath.name, () => {
       expect(relative).toEqual("app.log")
     })
   })
+
+  describe(AbsolutePath.prototype.contains.name, () => {
+    it("returns true for same path", () => {
+      const dir = AbsolutePath("/tmp/logs")
+
+      expect(dir.contains(AbsolutePath("/tmp/logs"))).toBe(true)
+    })
+
+    it("returns true for direct child", () => {
+      const dir = AbsolutePath("/tmp/logs")
+
+      expect(dir.contains(AbsolutePath("/tmp/logs/app.log"))).toBe(true)
+    })
+
+    it("returns true for nested child", () => {
+      const dir = AbsolutePath("/tmp/logs")
+
+      expect(dir.contains(AbsolutePath("/tmp/logs/2024/01/app.log"))).toBe(true)
+    })
+
+    it("returns true for root directory containing any path", () => {
+      const root = AbsolutePath("/")
+
+      expect(root.contains(AbsolutePath("/tmp/logs/app.log"))).toBe(true)
+    })
+
+    it("returns false when checking if child contains parent", () => {
+      const dir = AbsolutePath("/tmp/logs")
+
+      expect(dir.contains(AbsolutePath("/tmp"))).toBe(false)
+    })
+
+    it("returns false for sibling directory", () => {
+      const dir = AbsolutePath("/tmp/logs")
+
+      expect(dir.contains(AbsolutePath("/tmp/data/file.txt"))).toBe(false)
+    })
+
+    it("returns false for path with similar prefix", () => {
+      const dir = AbsolutePath("/tmp/logs")
+
+      expect(dir.contains(AbsolutePath("/tmp/logs-backup/app.log"))).toBe(false)
+    })
+  })
+
+  describe(AbsolutePath.prototype.eq.name, () => {
+    it("returns true for equal paths", () => {
+      const path1 = AbsolutePath("/tmp/logs")
+      const path2 = AbsolutePath("/tmp/logs")
+
+      expect(path1.eq(path2)).toBe(true)
+    })
+
+    it("returns true for paths that normalize to the same value", () => {
+      const path1 = AbsolutePath("/tmp/logs")
+      const path2 = AbsolutePath("/tmp/../tmp/logs")
+
+      expect(path1.eq(path2)).toBe(true)
+    })
+
+    it("returns false for different paths", () => {
+      const path1 = AbsolutePath("/tmp/logs")
+      const path2 = AbsolutePath("/tmp/data")
+
+      expect(path1.eq(path2)).toBe(false)
+    })
+
+    it("returns false for parent/child paths", () => {
+      const path1 = AbsolutePath("/tmp")
+      const path2 = AbsolutePath("/tmp/logs")
+
+      expect(path1.eq(path2)).toBe(false)
+    })
+  })
 })
