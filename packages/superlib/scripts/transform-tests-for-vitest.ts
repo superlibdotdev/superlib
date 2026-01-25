@@ -25,11 +25,7 @@ export async function transformTestsForVitest(
 ): Promise<void> {
   const testFiles = await glob({ pattern: "**/*.test.ts", cwd: srcDir, onlyFiles: true }, fs)
 
-  const filesToTransform = testFiles.filter(
-    (filePath) => !filePath.path.endsWith(".test-vitest.ts"),
-  )
-
-  for (const filePath of filesToTransform) {
+  for (const filePath of testFiles) {
     await transformTestFile(filePath, fs)
   }
 }
@@ -38,7 +34,7 @@ async function transformTestFile(filePath: AbsolutePath, fs: IFileSystem): Promi
   const content = (await fs.readFile(filePath)).unwrap()
   const transformed = transformContent(content)
   const outputPath = AbsolutePath(filePath.path.replace(/\.test\.ts$/, ".test-vitest.ts"))
-  ;(await fs.writeFile(outputPath, transformed)).unwrap()
+    ; (await fs.writeFile(outputPath, transformed)).unwrap()
 }
 
 export function transformContent(content: string): string {

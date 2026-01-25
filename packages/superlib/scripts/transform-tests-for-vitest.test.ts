@@ -43,7 +43,7 @@ describe("example", () => {
     expect(await fs.exists(AbsolutePath("/src/task/retry.test-vitest.ts"))).toBe(true)
   })
 
-  it("does not transform already-transformed .test-vitest.ts files", async () => {
+  it("overwrites existing .test-vitest.ts output files", async () => {
     const fs = new MemoryFileSystem({
       src: {
         "example.test.ts": `import { describe, it, expect } from "bun:test"`,
