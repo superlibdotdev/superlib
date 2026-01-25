@@ -203,4 +203,23 @@ describe(memoize.name, () => {
     expect(distance({ x: 0, y: 0 }, { x: 3, y: 4 })).toBe(5)
     expect(callCount).toBe(1)
   })
+
+  it("handles special numeric values with distinct cache keys", () => {
+    const results: unknown[] = []
+    const track = memoize((val: number | null | undefined) => {
+      results.push(val)
+      return val
+    })
+
+    track(NaN)
+    track(Infinity)
+    track(-Infinity)
+    track(null)
+    track(undefined)
+    track(0)
+    track(-0)
+
+    expect(results).toHaveLength(7)
+    expect(results).toEqual([NaN, Infinity, -Infinity, null, undefined, 0, -0])
+  })
 })

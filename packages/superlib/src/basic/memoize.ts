@@ -29,6 +29,23 @@ export function memoize<TArgs extends unknown[], TResult>(
 }
 
 const serializePrimitive = (val: Primitive): string => {
+  if (val === undefined) {
+    return "undefined"
+  }
+  if (typeof val === "number") {
+    if (Number.isNaN(val)) {
+      return "NaN"
+    }
+    if (val === Infinity) {
+      return "Infinity"
+    }
+    if (val === -Infinity) {
+      return "-Infinity"
+    }
+    if (Object.is(val, -0)) {
+      return "-0"
+    }
+  }
   if (typeof val === "bigint") {
     return `${val}n`
   }
