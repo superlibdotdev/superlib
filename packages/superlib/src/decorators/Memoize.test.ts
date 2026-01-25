@@ -125,22 +125,24 @@ describe(Memoize.name, () => {
     let callCount = 0
 
     class Calculator {
+      constructor(private readonly offset: number) { }
+
       @Memoize()
       double(n: number): number {
         callCount++
-        return n * 2
+        return n * 2 + this.offset
       }
     }
 
-    const calc1 = new Calculator()
-    const calc2 = new Calculator()
+    const calc1 = new Calculator(3)
+    const calc2 = new Calculator(7)
 
-    expect(calc1.double(5)).toBe(10)
-    expect(calc2.double(5)).toBe(10)
+    expect(calc1.double(5)).toBe(13)
+    expect(calc2.double(5)).toBe(17)
     expect(callCount).toBe(2)
 
-    expect(calc1.double(5)).toBe(10)
-    expect(calc2.double(5)).toBe(10)
+    expect(calc1.double(5)).toBe(13)
+    expect(calc2.double(5)).toBe(17)
     expect(callCount).toBe(2)
   })
 
@@ -188,7 +190,7 @@ describe(Memoize.name, () => {
     let callCount = 0
 
     class Wrapper {
-      constructor(private readonly prefix: string) {}
+      constructor(private readonly prefix: string) { }
 
       @Memoize(([path]: [PathLike]) => path.path)
       async resolve(path: PathLike): Promise<string> {
