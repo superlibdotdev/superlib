@@ -28,6 +28,25 @@ class AbsolutePathClazz {
   relativeFrom(root: AbsolutePath): string {
     return pathModule.relative(root.path, this.path)
   }
+
+  /**
+   * Returns true if this directory contains the given path (or is equal to it).
+   */
+  contains(path: AbsolutePath): boolean {
+    const relative = pathModule.relative(this.path, path.path)
+    if (relative === "") {
+      return true
+    }
+
+    return !relative.startsWith("../") && relative !== ".." && !pathModule.isAbsolute(relative) // on Windows, paths on different drives return absolute paths
+  }
+
+  /**
+   * Returns true if this path equals the given path.
+   */
+  eq(other: AbsolutePath): boolean {
+    return this.path === other.path
+  }
 }
 
 function AbsolutePathClass(absolutePath: string): AbsolutePathClazz {
