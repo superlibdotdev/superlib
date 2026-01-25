@@ -1,19 +1,19 @@
 import type { Result } from "../../basic/Result"
 import type { AbsolutePath } from "./AbsolutePath"
 
-// @todo: this whole interface needs to be reviewed and additional error test cases need to be written
 export interface IFileSystem {
   readFile(path: AbsolutePath): Promise<Result<string, FileAccessError>>
   writeFile(path: AbsolutePath, contents: string): Promise<Result<void, FileWriteError>>
-  createDirectory(
+
+  createDir(
     path: AbsolutePath,
     options: { recursive: boolean },
   ): Promise<Result<void, DirCreateError>>
-  removeDirectory(
+  removeDir(
     path: AbsolutePath,
     options: { recursive: boolean; force: boolean },
   ): Promise<Result<void, DirRemoveError>>
-  listDirectory(path: AbsolutePath): Promise<Result<FileSystemEntry[], DirAccessError>>
+  listDir(path: AbsolutePath): Promise<Result<FileSystemEntry[], DirAccessError>>
 
   get(path: AbsolutePath): Promise<FileSystemEntry | undefined>
   exists(path: AbsolutePath): Promise<boolean>

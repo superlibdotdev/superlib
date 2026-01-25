@@ -92,7 +92,7 @@ export class FileSystem implements IFileSystem {
     }
   }
 
-  async listDirectory(path: AbsolutePath): Promise<Result<FileSystemEntry[], DirAccessError>> {
+  async listDir(path: AbsolutePath): Promise<Result<FileSystemEntry[], DirAccessError>> {
     const entry = await this.get(path)
     if (entry === undefined) {
       return Err({ type: "fs/dir-not-found", path })
@@ -113,7 +113,7 @@ export class FileSystem implements IFileSystem {
     )
   }
 
-  async createDirectory(
+  async createDir(
     path: AbsolutePath,
     options: { recursive: boolean },
   ): Promise<Result<void, DirCreateError>> {
@@ -136,7 +136,7 @@ export class FileSystem implements IFileSystem {
       .toPromise()
   }
 
-  async removeDirectory(
+  async removeDir(
     path: AbsolutePath,
     options: { recursive: boolean; force: boolean },
   ): Promise<Result<void, DirRemoveError>> {

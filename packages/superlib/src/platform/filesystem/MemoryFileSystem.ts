@@ -52,14 +52,14 @@ export class MemoryFileSystem implements IFileSystem {
     return (await this.get(path)) !== undefined
   }
 
-  async createDirectory(
+  async createDir(
     dirPath: AbsolutePath,
     options: { recursive: boolean },
   ): Promise<Result<void, DirCreateError>> {
     return this.createDirectorySync(dirPath, options)
   }
 
-  async removeDirectory(
+  async removeDir(
     dirPath: AbsolutePath,
     options: { recursive: boolean; force: boolean },
   ): Promise<Result<void, DirRemoveError>> {
@@ -92,8 +92,7 @@ export class MemoryFileSystem implements IFileSystem {
 
   async createTempDir(prefix: string): Promise<TempDirHandle> {
     const tempDirPath = this.root.join("tmp", `${prefix}${this.tempDirCounter++}`)
-
-    ;(await this.createDirectory(tempDirPath, { recursive: true })).unwrap()
+    ;(await this.createDir(tempDirPath, { recursive: true })).unwrap()
 
     const removeTempDir = (): void => {
       this.removeDirectoryRecursive(tempDirPath)
@@ -107,7 +106,7 @@ export class MemoryFileSystem implements IFileSystem {
     }
   }
 
-  async listDirectory(path: AbsolutePath): Promise<Result<FileSystemEntry[], DirAccessError>> {
+  async listDir(path: AbsolutePath): Promise<Result<FileSystemEntry[], DirAccessError>> {
     const entry = this.entries.get(path)
 
     if (entry?.type === "file") {
