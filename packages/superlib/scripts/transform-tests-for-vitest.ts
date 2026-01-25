@@ -17,6 +17,7 @@
  *
  * Output files have .test-vitest.ts suffix (Bun ignores these)
  */
+import { assert } from "../src"
 import { AbsolutePath, FileSystem, glob, type IFileSystem } from "../src/platform/filesystem"
 
 export async function transformTestsForVitest(
@@ -24,6 +25,8 @@ export async function transformTestsForVitest(
   fs: IFileSystem,
 ): Promise<void> {
   const testFiles = await glob({ pattern: "**/*.test.ts", cwd: srcDir, onlyFiles: true }, fs)
+
+  assert(!testFiles.some((f) => f.path.endsWith(".test-vitest.ts")), "Shouldn't match output files")
 
   for (const filePath of testFiles) {
     await transformTestFile(filePath, fs)
@@ -34,7 +37,7 @@ async function transformTestFile(filePath: AbsolutePath, fs: IFileSystem): Promi
   const content = (await fs.readFile(filePath)).unwrap()
   const transformed = transformContent(content)
   const outputPath = AbsolutePath(filePath.path.replace(/\.test\.ts$/, ".test-vitest.ts"))
-    ; (await fs.writeFile(outputPath, transformed)).unwrap()
+  ;(await fs.writeFile(outputPath, transformed)).unwrap()
 }
 
 export function transformContent(content: string): string {

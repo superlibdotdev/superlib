@@ -43,19 +43,17 @@ describe("example", () => {
     expect(await fs.exists(AbsolutePath("/src/task/retry.test-vitest.ts"))).toBe(true)
   })
 
-  it("overwrites existing .test-vitest.ts output files", async () => {
+  it("does not transform already-transformed .test-vitest.ts files", async () => {
     const fs = new MemoryFileSystem({
       src: {
-        "example.test.ts": `import { describe, it, expect } from "bun:test"`,
-        "example.test-vitest.ts": `original vitest content`,
+        "example.test-vitest.ts": `import { describe, it, expect } from "bun:test`,
       },
     })
 
     await transformTestsForVitest(AbsolutePath("/src"), fs)
 
     const vitestContent = (await fs.readFile(AbsolutePath("/src/example.test-vitest.ts"))).unwrap()
-    expect(vitestContent).toContain('from "vitest"')
-    expect(vitestContent).not.toBe("original vitest content")
+    expect(vitestContent).toBe('import { describe, it, expect } from "bun:test')
   })
 })
 
