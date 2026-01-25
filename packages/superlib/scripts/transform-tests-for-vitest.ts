@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * Transforms bun:test test files to vitest format.
  *
@@ -7,32 +6,42 @@
  * - Removes mock and spyOn from imports (they become vi.fn and vi.spyOn)
  * - mock( → vi.fn(
  * - spyOn( → vi.spyOn(
+ * - jest. → vi.
+ * - .toBeTrue() → .toBe(true)
+ * - .toBeFalse() → .toBe(false)
+ * - .toBeBoolean() → .toSatisfy((v: unknown) => typeof v === "boolean")
+ * - .toBeInteger() → .toSatisfy(Number.isInteger)
+ * - .toBeWithin(min, max) → .toSatisfy((v: number) => v >= min && v < max)
+ * - clock.advanceTimersByTime( → await clock.advanceTimersByTimeAsync(
+ * - Adds async to test blocks using .rejects. and adds await before expect().rejects
  *
  * Output files have .test-vitest.ts suffix (Bun ignores these)
  */
+import { AbsolutePath, FileSystem, glob, type IFileSystem } from "../src/platform/filesystem"
 
-import { readdir, readFile, writeFile } from "node:fs/promises"
-import { join, relative } from "node:path"
+export async function transformTestsForVitest(
+  srcDir: AbsolutePath,
+  fs: IFileSystem,
+): Promise<void> {
+  const testFiles = await glob({ pattern: "**/*.test.ts", cwd: srcDir, onlyFiles: true }, fs)
 
-const SRC_DIR = join(import.meta.dirname, "../src")
+  const filesToTransform = testFiles.filter(
+    (filePath) => !filePath.path.endsWith(".test-vitest.ts"),
+  )
 
-async function findTestFiles(dir: string): Promise<string[]> {
-  const files: string[] = []
-  const entries = await readdir(dir, { withFileTypes: true })
-
-  for (const entry of entries) {
-    const fullPath = join(dir, entry.name)
-    if (entry.isDirectory()) {
-      files.push(...(await findTestFiles(fullPath)))
-    } else if (entry.name.endsWith(".test.ts") && !entry.name.endsWith(".test-vitest.ts")) {
-      files.push(fullPath)
-    }
+  for (const filePath of filesToTransform) {
+    await transformTestFile(filePath, fs)
   }
-
-  return files
 }
 
-function transformContent(content: string): string {
+async function transformTestFile(filePath: AbsolutePath, fs: IFileSystem): Promise<void> {
+  const content = (await fs.readFile(filePath)).unwrap()
+  const transformed = transformContent(content)
+  const outputPath = AbsolutePath(filePath.path.replace(/\.test\.ts$/, ".test-vitest.ts"))
+  ;(await fs.writeFile(outputPath, transformed)).unwrap()
+}
+
+export function transformContent(content: string): string {
   // Transform the import statement
   content = content.replace(
     /import\s*\{([^}]+)\}\s*from\s*["']bun:test["']/,
@@ -93,6 +102,13 @@ function transformContent(content: string): string {
     "await clock.advanceTimersByTimeAsync(",
   )
 
+  // Handle async/await for .rejects
+  content = transformRejectsToAsync(content)
+
+  return content
+}
+
+function transformRejectsToAsync(content: string): string {
   // In vitest, expect().rejects returns a Promise and needs await
   // In Bun, it doesn't. Add await before expect() when .rejects is used.
   // Also need to make the test function async if it isn't already.
@@ -142,7 +158,7 @@ function transformContent(content: string): string {
   }
 
   // Second pass: make identified test blocks async and add await to .rejects
-  content = lines
+  return lines
     .map((line, index) => {
       // Make test function async if needed
       if (testBlocksNeedingAsync.includes(index)) {
@@ -161,29 +177,9 @@ function transformContent(content: string): string {
       return line
     })
     .join("\n")
-
-  return content
 }
 
-async function main(): Promise<void> {
-  const testFiles = await findTestFiles(SRC_DIR)
-
-  console.log(`Found ${testFiles.length} test files to transform`)
-
-  for (const file of testFiles) {
-    const content = await readFile(file, "utf-8")
-    const transformed = transformContent(content)
-
-    const outputPath = file.replace(/\.test\.ts$/, ".test-vitest.ts")
-    await writeFile(outputPath, transformed)
-
-    console.log(`  ${relative(SRC_DIR, file)} -> ${relative(SRC_DIR, outputPath)}`)
-  }
-
-  console.log(`\nTransformed ${testFiles.length} files`)
+if (import.meta.main) {
+  const srcDir = AbsolutePath(import.meta.dirname).join("../src")
+  await transformTestsForVitest(srcDir, new FileSystem())
 }
-
-main().catch((error) => {
-  console.error("Transform failed:", error)
-  process.exit(1)
-})
