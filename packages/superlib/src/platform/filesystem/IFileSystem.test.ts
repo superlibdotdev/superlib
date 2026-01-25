@@ -110,6 +110,14 @@ for (const FS of fileSystems) {
         expect(await fileSystem.exists(dir)).toBeTrue()
       })
 
+      it("creates nested directories by default", async () => {
+        await using tmp = await fileSystem.createTempDir("superlib-tests")
+        const dir = tmp.path.join("parent/child")
+        ;(await fileSystem.createDir(dir)).unwrap()
+
+        expect(await fileSystem.exists(dir)).toBeTrue()
+      })
+
       it("returns error when parent is missing and not recursive", async () => {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
         const dir = tmp.path.join("parent/child")

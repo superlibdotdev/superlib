@@ -54,7 +54,7 @@ export class MemoryFileSystem implements IFileSystem {
 
   async createDir(
     dirPath: AbsolutePath,
-    options: { recursive: boolean },
+    options: { recursive: boolean } = { recursive: true },
   ): Promise<Result<void, DirCreateError>> {
     return this.createDirectorySync(dirPath, options)
   }

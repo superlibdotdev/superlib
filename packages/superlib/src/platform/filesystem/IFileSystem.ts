@@ -7,7 +7,7 @@ export interface IFileSystem {
 
   createDir(
     path: AbsolutePath,
-    options: { recursive: boolean },
+    options?: { recursive: boolean },
   ): Promise<Result<void, DirCreateError>>
   removeDir(
     path: AbsolutePath,

@@ -115,7 +115,7 @@ export class FileSystem implements IFileSystem {
 
   async createDir(
     path: AbsolutePath,
-    options: { recursive: boolean },
+    options: { recursive: boolean } = { recursive: true },
   ): Promise<Result<void, DirCreateError>> {
     return ResultAsync.try(
       () => mkdir(path.path, { recursive: options.recursive }),
