@@ -1,5 +1,6 @@
-import { describe, expect, it } from "bun:test"
+import { afterEach, beforeEach, describe, expect, it, jest, vi } from "bun:test"
 
+import { sleep } from "../time"
 import { Memoize } from "./Memoize"
 
 interface PathLike {
@@ -7,11 +8,19 @@ interface PathLike {
 }
 
 describe(Memoize.name, () => {
-  it("memoizes sync method calls", () => {
+  let clock: typeof vi
+  beforeEach(() => {
+    clock = jest.useFakeTimers()
+  })
+  afterEach(() => {
+    jest.useRealTimers()
+  })
+
+  it("memoizes sync method calls with default serializer", () => {
     let callCount = 0
 
     class Calculator {
-      @Memoize(([n]) => String(n))
+      @Memoize()
       double(n: number): number {
         callCount++
         return n * 2
@@ -26,11 +35,29 @@ describe(Memoize.name, () => {
     expect(callCount).toBe(1)
   })
 
+  it("memoizes sync method calls with custom serializer", () => {
+    let callCount = 0
+
+    class Calculator {
+      @Memoize(([n]) => String(n))
+      double(n: number): number {
+        callCount++
+        return n * 2
+      }
+    }
+
+    const calc = new Calculator()
+
+    expect(calc.double(5)).toBe(10)
+    expect(calc.double(5)).toBe(10)
+    expect(callCount).toBe(1)
+  })
+
   it("memoizes async method calls", async () => {
     let callCount = 0
 
     class AsyncCalculator {
-      @Memoize(([n]) => String(n))
+      @Memoize()
       async double(n: number): Promise<number> {
         callCount++
         return n * 2
@@ -49,10 +76,10 @@ describe(Memoize.name, () => {
     let callCount = 0
 
     class SlowCalculator {
-      @Memoize(([n]) => String(n))
+      @Memoize()
       async double(n: number): Promise<number> {
         callCount++
-        await new Promise((resolve) => setTimeout(resolve, 10))
+        await sleep({ milliseconds: 10 })
         return n * 2
       }
     }
@@ -66,6 +93,8 @@ describe(Memoize.name, () => {
     expect(promise1).toBe(promise2)
     expect(promise2).toBe(promise3)
 
+    clock.advanceTimersByTime(10)
+
     const results = await Promise.all([promise1, promise2, promise3])
 
     expect(results).toEqual([10, 10, 10])
@@ -76,7 +105,7 @@ describe(Memoize.name, () => {
     let callCount = 0
 
     class Calculator {
-      @Memoize(([n]) => String(n))
+      @Memoize()
       double(n: number): number {
         callCount++
         return n * 2
@@ -96,7 +125,7 @@ describe(Memoize.name, () => {
     let callCount = 0
 
     class Calculator {
-      @Memoize(([n]) => String(n))
+      @Memoize()
       double(n: number): number {
         callCount++
         return n * 2
@@ -115,11 +144,11 @@ describe(Memoize.name, () => {
     expect(callCount).toBe(2)
   })
 
-  it("works with multiple arguments", () => {
+  it("works with multiple primitive arguments", () => {
     let callCount = 0
 
     class Calculator {
-      @Memoize(([a, b]) => `${a},${b}`)
+      @Memoize()
       add(a: number, b: number): number {
         callCount++
         return a + b
@@ -134,7 +163,7 @@ describe(Memoize.name, () => {
     expect(callCount).toBe(2)
   })
 
-  it("works with object arguments", async () => {
+  it("works with object arguments using custom serializer", async () => {
     let callCount = 0
 
     class PathResolver {
@@ -174,5 +203,32 @@ describe(Memoize.name, () => {
     expect(await wrapper.resolve(path)).toBe("test:/foo")
     expect(await wrapper.resolve(path)).toBe("test:/foo")
     expect(callCount).toBe(1)
+  })
+
+  it("handles all primitive types with default serializer", () => {
+    const results: string[] = []
+
+    class Tracker {
+      @Memoize()
+      track(val: string | number | boolean | null): string {
+        results.push(String(val))
+        return String(val)
+      }
+    }
+
+    const tracker = new Tracker()
+
+    tracker.track("hello")
+    tracker.track(42)
+    tracker.track(true)
+    tracker.track(null)
+
+    // Call again - should use cache
+    tracker.track("hello")
+    tracker.track(42)
+    tracker.track(true)
+    tracker.track(null)
+
+    expect(results).toEqual(["hello", "42", "true", "null"])
   })
 })
