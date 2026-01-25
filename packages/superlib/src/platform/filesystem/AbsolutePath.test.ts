@@ -113,16 +113,22 @@ describe(AbsolutePath.name, () => {
   })
 
   describe(AbsolutePath.prototype.contains.name, () => {
-    it("returns true for same path", () => {
-      const dir = AbsolutePath("/tmp/logs")
-
-      expect(dir.contains(AbsolutePath("/tmp/logs"))).toBe(true)
-    })
-
     it("returns true for direct child", () => {
       const dir = AbsolutePath("/tmp/logs")
 
       expect(dir.contains(AbsolutePath("/tmp/logs/app.log"))).toBe(true)
+    })
+
+    it("returns true for root path", () => {
+      const dir = AbsolutePath("/")
+
+      expect(dir.contains(AbsolutePath("/tmp/logs/app.log"))).toBe(true)
+    })
+
+    it("returns true for same path", () => {
+      const dir = AbsolutePath("/tmp/logs")
+
+      expect(dir.contains(AbsolutePath("/tmp/logs"))).toBe(true)
     })
 
     it("returns true for nested child", () => {

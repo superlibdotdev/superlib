@@ -38,7 +38,9 @@ class AbsolutePathClazz {
       return true
     }
 
-    return !relative.startsWith("../") && relative !== ".." && !pathModule.isAbsolute(relative)
+    return !relative.startsWith("../") &&
+      relative !== ".." &&
+      !pathModule.isAbsolute(relative) // on Windows, paths on different drives return absolute paths
   }
 
   /**
