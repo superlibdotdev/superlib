@@ -2,7 +2,7 @@ import { universalMethodDecorator } from "./common"
 
 const instanceCaches = new WeakMap<object, Map<string, unknown>>()
 
-export function Memoized<TThis extends object, TArgs extends unknown[], TResult>(
+export function Memoize<TThis extends object, TArgs extends unknown[], TResult>(
   keySerializer: (args: TArgs) => string,
 ): (
   value: (this: TThis, ...args: TArgs) => TResult,

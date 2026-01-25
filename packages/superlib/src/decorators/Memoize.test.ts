@@ -1,17 +1,17 @@
 import { describe, expect, it } from "bun:test"
 
-import { Memoized } from "./Memoized"
+import { Memoize } from "./Memoize"
 
 interface PathLike {
   path: string
 }
 
-describe(Memoized.name, () => {
+describe(Memoize.name, () => {
   it("memoizes sync method calls", () => {
     let callCount = 0
 
     class Calculator {
-      @Memoized(([n]) => String(n))
+      @Memoize(([n]) => String(n))
       double(n: number): number {
         callCount++
         return n * 2
@@ -30,7 +30,7 @@ describe(Memoized.name, () => {
     let callCount = 0
 
     class AsyncCalculator {
-      @Memoized(([n]) => String(n))
+      @Memoize(([n]) => String(n))
       async double(n: number): Promise<number> {
         callCount++
         return n * 2
@@ -49,7 +49,7 @@ describe(Memoized.name, () => {
     let callCount = 0
 
     class SlowCalculator {
-      @Memoized(([n]) => String(n))
+      @Memoize(([n]) => String(n))
       async double(n: number): Promise<number> {
         callCount++
         await new Promise((resolve) => setTimeout(resolve, 10))
@@ -76,7 +76,7 @@ describe(Memoized.name, () => {
     let callCount = 0
 
     class Calculator {
-      @Memoized(([n]) => String(n))
+      @Memoize(([n]) => String(n))
       double(n: number): number {
         callCount++
         return n * 2
@@ -96,7 +96,7 @@ describe(Memoized.name, () => {
     let callCount = 0
 
     class Calculator {
-      @Memoized(([n]) => String(n))
+      @Memoize(([n]) => String(n))
       double(n: number): number {
         callCount++
         return n * 2
@@ -119,7 +119,7 @@ describe(Memoized.name, () => {
     let callCount = 0
 
     class Calculator {
-      @Memoized(([a, b]) => `${a},${b}`)
+      @Memoize(([a, b]) => `${a},${b}`)
       add(a: number, b: number): number {
         callCount++
         return a + b
@@ -138,7 +138,7 @@ describe(Memoized.name, () => {
     let callCount = 0
 
     class PathResolver {
-      @Memoized(([path]: [PathLike]) => path.path)
+      @Memoize(([path]: [PathLike]) => path.path)
       async resolve(path: PathLike): Promise<string> {
         callCount++
         return `resolved:${path.path}`
@@ -161,7 +161,7 @@ describe(Memoized.name, () => {
     class Wrapper {
       constructor(private readonly prefix: string) {}
 
-      @Memoized(([path]: [PathLike]) => path.path)
+      @Memoize(([path]: [PathLike]) => path.path)
       async resolve(path: PathLike): Promise<string> {
         callCount++
         return `${this.prefix}:${path.path}`
