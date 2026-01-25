@@ -1,4 +1,5 @@
 export * from "./assert"
 export * from "./BaseError"
+export * from "./memoize"
 export * from "./Result"
 export * from "./ResultAsync"
