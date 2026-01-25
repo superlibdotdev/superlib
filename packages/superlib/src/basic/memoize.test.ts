@@ -1,8 +1,17 @@
-import { describe, expect, it } from "bun:test"
+import { afterEach, beforeEach, describe, expect, it, jest, vi } from "bun:test"
 
+import { sleep } from "../time"
 import { memoize } from "./memoize"
 
 describe(memoize.name, () => {
+  let clock: typeof vi
+  beforeEach(() => {
+    clock = jest.useFakeTimers()
+  })
+  afterEach(() => {
+    jest.useRealTimers()
+  })
+
   it("memoizes function calls", () => {
     let callCount = 0
     const double = memoize(
@@ -39,7 +48,7 @@ describe(memoize.name, () => {
     const slow = memoize(
       async (n: number) => {
         callCount++
-        await new Promise((resolve) => setTimeout(resolve, 10))
+        await sleep({ milliseconds: 10 })
         return n * 2
       },
       (n) => String(n),
@@ -49,6 +58,9 @@ describe(memoize.name, () => {
     const promise2 = slow(5)
 
     expect(promise1).toBe(promise2)
+
+    clock.advanceTimersByTime(10)
+
     expect(await Promise.all([promise1, promise2])).toEqual([10, 10])
     expect(callCount).toBe(1)
   })
