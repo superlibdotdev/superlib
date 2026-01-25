@@ -13,11 +13,11 @@ export function createCachedFs(fs: IFileSystem): GlobFs {
   return {
     get: memoize(
       (path: AbsolutePath) => fs.get(path),
-      (path) => path.path,
+      ([path]) => path.path,
     ),
     listDirectory: memoize(
       (path: AbsolutePath) => fs.listDirectory(path),
-      (path) => path.path,
+      ([path]) => path.path,
     ),
   }
 }

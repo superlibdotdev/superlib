@@ -32,7 +32,7 @@ describe(memoize.name, () => {
         callCount++
         return n * 2
       },
-      (n) => String(n),
+      ([n]) => String(n),
     )
 
     expect(double(5)).toBe(10)
@@ -132,11 +132,75 @@ describe(memoize.name, () => {
         callCount++
         return user.id
       },
-      (user) => user.id,
+      ([user]) => user.id,
     )
 
     expect(getUser({ id: "1" })).toBe("1")
     expect(getUser({ id: "1" })).toBe("1")
+    expect(callCount).toBe(1)
+  })
+
+  it("works with multiple primitive arguments", () => {
+    let callCount = 0
+    const add = memoize((a: number, b: number) => {
+      callCount++
+      return a + b
+    })
+
+    expect(add(1, 2)).toBe(3)
+    expect(add(1, 2)).toBe(3)
+    expect(add(2, 1)).toBe(3)
+    expect(callCount).toBe(2)
+  })
+
+  it("works with zero arguments", () => {
+    let callCount = 0
+    const getValue = memoize(() => {
+      callCount++
+      return 42
+    })
+
+    expect(getValue()).toBe(42)
+    expect(getValue()).toBe(42)
+    expect(getValue()).toBe(42)
+    expect(callCount).toBe(1)
+  })
+
+  it("works with async functions and multiple arguments", async () => {
+    let callCount = 0
+    const asyncAdd = memoize(async (a: number, b: number) => {
+      callCount++
+      await sleep({ milliseconds: 10 })
+      return a + b
+    })
+
+    const promise1 = asyncAdd(1, 2)
+    const promise2 = asyncAdd(1, 2)
+
+    expect(promise1).toBe(promise2)
+
+    clock.advanceTimersByTime(10)
+
+    expect(await Promise.all([promise1, promise2])).toEqual([3, 3])
+    expect(callCount).toBe(1)
+  })
+
+  it("works with custom serializer for multiple arguments", () => {
+    interface Point {
+      x: number
+      y: number
+    }
+    let callCount = 0
+    const distance = memoize(
+      (p1: Point, p2: Point) => {
+        callCount++
+        return Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2)
+      },
+      ([p1, p2]) => `${p1.x},${p1.y}-${p2.x},${p2.y}`,
+    )
+
+    expect(distance({ x: 0, y: 0 }, { x: 3, y: 4 })).toBe(5)
+    expect(distance({ x: 0, y: 0 }, { x: 3, y: 4 })).toBe(5)
     expect(callCount).toBe(1)
   })
 })
