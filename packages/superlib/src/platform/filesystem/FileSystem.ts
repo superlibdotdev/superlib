@@ -15,6 +15,8 @@ import * as pathModule from "node:path"
 import type {
   DirAccessError,
   DirCreateError,
+  DirNotADirError,
+  DirNotEmptyError,
   DirRemoveError,
   FileAccessError,
   FileSystemEntry,
@@ -136,6 +138,22 @@ export class FileSystem implements IFileSystem {
       .toPromise()
   }
 
+  async removeDir(
+    path: AbsolutePath,
+    options: { recursive: true; force: true },
+  ): Promise<Result<void, never>>
+  async removeDir(
+    path: AbsolutePath,
+    options: { recursive: true; force: false },
+  ): Promise<Result<void, DirAccessError>>
+  async removeDir(
+    path: AbsolutePath,
+    options: { recursive: false; force: true },
+  ): Promise<Result<void, DirNotEmptyError | DirNotADirError>>
+  async removeDir(
+    path: AbsolutePath,
+    options: { recursive: false; force: false },
+  ): Promise<Result<void, DirRemoveError>>
   async removeDir(
     path: AbsolutePath,
     options: { recursive: boolean; force: boolean },

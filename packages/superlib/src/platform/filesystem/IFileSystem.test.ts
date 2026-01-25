@@ -191,7 +191,7 @@ for (const FS of fileSystems) {
         )
       })
 
-      it("returns error when not a directory", async () => {
+      it("returns error when not a directory and recursive is false", async () => {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
         const filePath = tmp.path.join("file.txt")
         ;(await fileSystem.writeFile(filePath, "hello world!")).unwrap()
@@ -199,6 +199,16 @@ for (const FS of fileSystems) {
         expect(await fileSystem.removeDir(filePath, { recursive: false, force: false })).toEqual(
           Err({ type: "fs/not-a-dir", path: filePath }),
         )
+      })
+
+      it("succeeds when removing file with recursive and force", async () => {
+        await using tmp = await fileSystem.createTempDir("superlib-tests")
+        const filePath = tmp.path.join("file.txt")
+        ;(await fileSystem.writeFile(filePath, "hello world!")).unwrap()
+
+        ;(await fileSystem.removeDir(filePath, { recursive: true, force: true })).unwrap()
+
+        expect(await fileSystem.exists(filePath)).toBeFalse()
       })
 
       it("succeeds when directory is missing and force is true", async () => {

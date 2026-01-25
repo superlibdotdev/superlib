@@ -1,6 +1,8 @@
 import type {
   DirAccessError,
   DirCreateError,
+  DirNotADirError,
+  DirNotEmptyError,
   DirRemoveError,
   FileAccessError,
   FileSystemEntry,
@@ -61,11 +63,31 @@ export class MemoryFileSystem implements IFileSystem {
 
   async removeDir(
     dirPath: AbsolutePath,
+    options: { recursive: true; force: true },
+  ): Promise<Result<void, never>>
+  async removeDir(
+    dirPath: AbsolutePath,
+    options: { recursive: true; force: false },
+  ): Promise<Result<void, DirAccessError>>
+  async removeDir(
+    dirPath: AbsolutePath,
+    options: { recursive: false; force: true },
+  ): Promise<Result<void, DirNotEmptyError | DirNotADirError>>
+  async removeDir(
+    dirPath: AbsolutePath,
+    options: { recursive: false; force: false },
+  ): Promise<Result<void, DirRemoveError>>
+  async removeDir(
+    dirPath: AbsolutePath,
     options: { recursive: boolean; force: boolean },
   ): Promise<Result<void, DirRemoveError>> {
     const entry = this.entries.get(dirPath)
 
     if (entry?.type === "file") {
+      if (options.recursive && options.force) {
+        this.entries.delete(dirPath)
+        return Ok()
+      }
       return Err({ type: "fs/not-a-dir", path: dirPath })
     }
 

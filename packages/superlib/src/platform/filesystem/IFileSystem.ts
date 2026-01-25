@@ -11,7 +11,19 @@ export interface IFileSystem {
   ): Promise<Result<void, DirCreateError>>
   removeDir(
     path: AbsolutePath,
-    options: { recursive: boolean; force: boolean },
+    options: { recursive: true; force: true },
+  ): Promise<Result<void, never>>
+  removeDir(
+    path: AbsolutePath,
+    options: { recursive: true; force: false },
+  ): Promise<Result<void, DirAccessError>>
+  removeDir(
+    path: AbsolutePath,
+    options: { recursive: false; force: true },
+  ): Promise<Result<void, DirNotEmptyError | DirNotADirError>>
+  removeDir(
+    path: AbsolutePath,
+    options: { recursive: false; force: false },
   ): Promise<Result<void, DirRemoveError>>
   listDir(path: AbsolutePath): Promise<Result<FileSystemEntry[], DirAccessError>>
 
@@ -59,17 +71,24 @@ export type FileWriteError =
       cause: unknown
     }
 
-export type DirAccessError =
-  | {
-      type: "fs/dir-not-found"
-      path: AbsolutePath
-    }
-  | {
-      type: "fs/not-a-dir"
-      path: AbsolutePath
-    }
+export type DirNotFoundError = {
+  type: "fs/dir-not-found"
+  path: AbsolutePath
+}
 
-export type DirRemoveError = DirAccessError | { type: "fs/dir-not-empty"; path: AbsolutePath }
+export type DirNotADirError = {
+  type: "fs/not-a-dir"
+  path: AbsolutePath
+}
+
+export type DirNotEmptyError = {
+  type: "fs/dir-not-empty"
+  path: AbsolutePath
+}
+
+export type DirAccessError = DirNotFoundError | DirNotADirError
+
+export type DirRemoveError = DirAccessError | DirNotEmptyError
 
 export type DirCreateError =
   | {
