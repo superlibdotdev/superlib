@@ -1,6 +1,6 @@
 # Agents
 
-This file provides guidance to and Agent when working with code in this repository.
+This file provides guidance to an Agent when working with code in this repository.
 
 ## Project Overview
 
@@ -8,7 +8,7 @@ SuperLib is a missing standard library for TypeScript, providing utilities for a
 
 ## Commands
 
-note: each change should
+**Important**: Always run `bun run fix` after introducing changes to the codebase. This ensures code is properly formatted, linted, and tested.
 
 ### Running Tests
 
@@ -86,16 +86,20 @@ const safeFetch = makeSafeFetch({
 
 4. **Temporal API**: Uses `temporal-polyfill` for duration handling. Import is global via `index.ts`.
 
-5. To handle impossible cases in code use `basics/assert.ts` instead of throwing errors.
+5. **Impossible Cases**: To handle impossible cases in code use `basic/assert.ts` instead of throwing errors.
+
+6. **Never leave floating Results**: Always call `.unwrap()` or properly handle `Result` values. Ignoring Results silently swallows errors. For example, `await fs.writeFile(path, content)` is wrong - use `(await fs.writeFile(path, content)).unwrap()`.
+
+7. **Prefer AbsolutePath.join()**: Use `AbsolutePath(basePath).join("relative/path")` instead of `path.join()` from `node:path`. This maintains type safety and consistency with the filesystem abstraction.
 
 ## Testing Conventions
 
-- Most tests should follow Arrange, Act, and Assert (AAA) with a new line between each section
+- Most tests should follow Arrange, Act, and Assert (AAA) pattern with a blank line between each section. Do not add `// Arrange`, `// Act`, `// Assert` comments - the blank lines are sufficient
 - Test files use `.test.ts` suffix
 - Tests use Bun's built-in test runner
 - Filesystem tests use `MemoryFileSystem` for isolation
 - Random-dependent code injects `IRandom` for deterministic testing
-- When testing time related functions ALWAYS mock clock with `jest.useFakeTimers()` and explicitly progress time with `clock.advanceTimersByTime(5)`
+- When testing time-related functions ALWAYS mock clock with `jest.useFakeTimers()` and explicitly progress time with `clock.advanceTimersByTime(5)`
 - When naming "describe" blocks, prefer `SomeClass.name` and `SomeClass.prototype.method.name` instead of hardcoding names
 - Instead of using `await expect(promise).resolves.toEqual` use `expect(await promise).toEqual`
 
