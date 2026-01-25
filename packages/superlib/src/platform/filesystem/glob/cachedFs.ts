@@ -1,3 +1,6 @@
+// Glob operations repeatedly access the same directories and files during traversal.
+// Caching these calls avoids redundant I/O and improves performance.
+
 import type { Result } from "../../../basic/Result"
 import type { AbsolutePath } from "../AbsolutePath"
 import type { DirAccessError, FileSystemEntry, IFileSystem } from "../IFileSystem"
