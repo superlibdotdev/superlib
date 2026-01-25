@@ -140,26 +140,15 @@ export class FileSystem implements IFileSystem {
     path: AbsolutePath,
     options: { recursive: boolean; force: boolean },
   ): Promise<Result<void, DirRemoveError>> {
-    // @todo it might be possible to simplify this
-    if (options.recursive) {
-      return ResultAsync.try(
-        () => rm(path.path, { recursive: true, force: options.force }),
-        (error): DirRemoveError => {
-          if (error instanceof Error && "code" in error) {
-            switch (error.code) {
-              case "ENOENT":
-                return { type: "fs/dir-not-found", path }
-              case "ENOTDIR":
-                return { type: "fs/not-a-dir", path }
-            }
-          }
-          throw error
-        },
-      ).toPromise()
-    }
-
     return ResultAsync.try<void, DirRemoveError>(
-      () => rmdir(path.path),
+      async () => {
+        if (options.recursive) {
+          await rm(path.path, { recursive: true, force: options.force })
+        } else {
+          // to rm empty dir (recursive=false) we need to use rmdir
+          await rmdir(path.path)
+        }
+      },
       (error) => {
         if (error instanceof Error && "code" in error) {
           switch (error.code) {
