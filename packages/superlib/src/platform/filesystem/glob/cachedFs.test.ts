@@ -1,8 +1,9 @@
 import { describe, expect, it, mock } from "bun:test"
 
+import type { IFileSystem } from "../IFileSystem"
+
 import { Ok } from "../../../basic/Result"
 import { AbsolutePath } from "../AbsolutePath"
-import type { IFileSystem } from "../IFileSystem"
 import { createCachedFs } from "./cachedFs"
 
 describe(createCachedFs.name, () => {
@@ -16,7 +17,10 @@ describe(createCachedFs.name, () => {
       createDirectory: mock(async () => {}),
       removeDirectory: mock(async () => Ok()),
       exists: mock(async () => true),
-      createTempDir: mock(async () => ({ path: AbsolutePath("/tmp"), [Symbol.asyncDispose]: async () => {} })),
+      createTempDir: mock(async () => ({
+        path: AbsolutePath("/tmp"),
+        [Symbol.asyncDispose]: async () => {},
+      })),
     }
 
     const cachedFs = createCachedFs(mockFs)
@@ -39,7 +43,10 @@ describe(createCachedFs.name, () => {
       createDirectory: mock(async () => {}),
       removeDirectory: mock(async () => Ok()),
       exists: mock(async () => true),
-      createTempDir: mock(async () => ({ path: AbsolutePath("/tmp"), [Symbol.asyncDispose]: async () => {} })),
+      createTempDir: mock(async () => ({
+        path: AbsolutePath("/tmp"),
+        [Symbol.asyncDispose]: async () => {},
+      })),
     }
 
     const cachedFs = createCachedFs(mockFs)
@@ -62,7 +69,10 @@ describe(createCachedFs.name, () => {
       createDirectory: mock(async () => {}),
       removeDirectory: mock(async () => Ok()),
       exists: mock(async () => true),
-      createTempDir: mock(async () => ({ path: AbsolutePath("/tmp"), [Symbol.asyncDispose]: async () => {} })),
+      createTempDir: mock(async () => ({
+        path: AbsolutePath("/tmp"),
+        [Symbol.asyncDispose]: async () => {},
+      })),
     }
 
     const cachedFs = createCachedFs(mockFs)
