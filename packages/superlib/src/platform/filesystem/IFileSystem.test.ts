@@ -17,14 +17,14 @@ for (const FS of fileSystems) {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
         const dir = tmp.path
         const filePath = dir.join("notes.txt")
-        await fileSystem.writeFile(filePath, "hello")
+        ;(await fileSystem.writeFile(filePath, "hello")).unwrap()
 
         const contents = await fileSystem.readFile(filePath)
 
         expect(contents).toEqual(Ok("hello"))
       })
 
-      it("throws when file does not exist", async () => {
+      it("returns error when file does not exist", async () => {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
         const dir = tmp.path
         const filePath = dir.join("missing.txt")
@@ -34,7 +34,7 @@ for (const FS of fileSystems) {
         )
       })
 
-      it("throws when file is a directory", async () => {
+      it("returns error when file is a directory", async () => {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
         const dir = tmp.path
 
@@ -58,14 +58,21 @@ for (const FS of fileSystems) {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
         const dir = tmp.path
         const filePath = dir.join("notes.txt")
-        await fileSystem.writeFile(filePath, "first")
+        ;(await fileSystem.writeFile(filePath, "first")).unwrap()
 
-        await fileSystem.writeFile(filePath, "second")
+        ;(await fileSystem.writeFile(filePath, "second")).unwrap()
 
         expect(await fileSystem.readFile(filePath)).toEqual(Ok("second"))
       })
 
-      it.skip("throws when writing file to non-existing dir", () => {})
+      it("returns error when writing file to non-existing dir", async () => {
+        await using tmp = await fileSystem.createTempDir("superlib-tests")
+        const filePath = tmp.path.join("missing/notes.txt")
+
+        expect(await fileSystem.writeFile(filePath, "hello")).toEqual(
+          Err({ type: "fs/parent-not-found", path: filePath }),
+        )
+      })
     })
 
     describe(FS.prototype.exists.name, () => {
@@ -73,7 +80,7 @@ for (const FS of fileSystems) {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
         const dir = tmp.path
         const filePath = dir.join("notes.txt")
-        await fileSystem.writeFile(filePath, "hello")
+        ;(await fileSystem.writeFile(filePath, "hello")).unwrap()
 
         expect(await fileSystem.exists(filePath)).toBeTrue()
       })
@@ -92,7 +99,7 @@ for (const FS of fileSystems) {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
         const dir = tmp.path.join("child")
 
-        await fileSystem.createDirectory(dir, { recursive: false })
+        ;(await fileSystem.createDirectory(dir, { recursive: false })).unwrap()
 
         expect(await fileSystem.exists(dir)).toBeTrue()
       })
@@ -101,16 +108,36 @@ for (const FS of fileSystems) {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
         const dir = tmp.path.join("parent/child")
 
-        await fileSystem.createDirectory(dir, { recursive: true })
+        ;(await fileSystem.createDirectory(dir, { recursive: true })).unwrap()
 
         expect(await fileSystem.exists(dir)).toBeTrue()
       })
 
-      it("throws when parent is missing and not recursive", async () => {
+      it("returns error when parent is missing and not recursive", async () => {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
         const dir = tmp.path.join("parent/child")
 
-        expect(fileSystem.createDirectory(dir, { recursive: false })).rejects.toThrow()
+        expect(await fileSystem.createDirectory(dir, { recursive: false })).toEqual(
+          Err({ type: "fs/parent-not-found", path: dir }),
+        )
+      })
+
+      it("returns error when directory already exists and not recursive", async () => {
+        await using tmp = await fileSystem.createTempDir("superlib-tests")
+        const dir = tmp.path.join("child")
+        ;(await fileSystem.createDirectory(dir, { recursive: false })).unwrap()
+
+        expect(await fileSystem.createDirectory(dir, { recursive: false })).toEqual(
+          Err({ type: "fs/already-exists", path: dir }),
+        )
+      })
+
+      it("succeeds when directory already exists and recursive", async () => {
+        await using tmp = await fileSystem.createTempDir("superlib-tests")
+        const dir = tmp.path.join("child")
+        ;(await fileSystem.createDirectory(dir, { recursive: false })).unwrap()
+
+        expect(await fileSystem.createDirectory(dir, { recursive: true })).toEqual(Ok())
       })
     })
 
@@ -118,7 +145,7 @@ for (const FS of fileSystems) {
       it("removes an empty directory", async () => {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
         const dir = tmp.path.join("child")
-        await fileSystem.createDirectory(dir, { recursive: false })
+        ;(await fileSystem.createDirectory(dir, { recursive: false })).unwrap()
 
         ;(await fileSystem.removeDirectory(dir, { recursive: false, force: false })).unwrap()
 
@@ -128,8 +155,8 @@ for (const FS of fileSystems) {
       it("removes directories recursively", async () => {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
         const dir = tmp.path.join("parent/child")
-        await fileSystem.createDirectory(dir, { recursive: true })
-        await fileSystem.writeFile(dir.join("note.txt"), "hello")
+        ;(await fileSystem.createDirectory(dir, { recursive: true })).unwrap()
+        ;(await fileSystem.writeFile(dir.join("note.txt"), "hello")).unwrap()
 
         ;(
           await fileSystem.removeDirectory(tmp.path.join("parent"), {
@@ -141,18 +168,18 @@ for (const FS of fileSystems) {
         expect(await fileSystem.exists(dir)).toBeFalse()
       })
 
-      it("throws when removing non-empty directory without recursive", async () => {
+      it("returns error when removing non-empty directory without recursive", async () => {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
         const dir = tmp.path.join("parent")
-        await fileSystem.createDirectory(dir, { recursive: false })
-        await fileSystem.writeFile(dir.join("note.txt"), "hello")
+        ;(await fileSystem.createDirectory(dir, { recursive: false })).unwrap()
+        ;(await fileSystem.writeFile(dir.join("note.txt"), "hello")).unwrap()
 
         expect(await fileSystem.removeDirectory(dir, { recursive: false, force: false })).toEqual(
           Err({ type: "fs/dir-not-empty", path: dir }),
         )
       })
 
-      it("throw when directory is missing and force is false", async () => {
+      it("returns error when directory is missing and force is false", async () => {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
         const dir = tmp.path.join("parent")
 
@@ -161,17 +188,17 @@ for (const FS of fileSystems) {
         )
       })
 
-      it("throw when not a directory", async () => {
+      it("returns error when not a directory", async () => {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
         const filePath = tmp.path.join("file.txt")
-        await fileSystem.writeFile(filePath, "hello world!")
+        ;(await fileSystem.writeFile(filePath, "hello world!")).unwrap()
 
         expect(
           await fileSystem.removeDirectory(filePath, { recursive: false, force: false }),
         ).toEqual(Err({ type: "fs/not-a-dir", path: filePath }))
       })
 
-      it("does not throw when directory is missing and force is true", async () => {
+      it("succeeds when directory is missing and force is true", async () => {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
         const dir = tmp.path.join("missing")
 
@@ -189,7 +216,7 @@ for (const FS of fileSystems) {
         expect(await fileSystem.exists(tempDir.path)).toBeTrue()
 
         const filename = tempDir.path.join("file.txt")
-        await fileSystem.writeFile(filename, "hello")
+        ;(await fileSystem.writeFile(filename, "hello")).unwrap()
         expect(await fileSystem.exists(filename)).toBeTrue()
 
         await tempDir[Symbol.asyncDispose]()
@@ -203,7 +230,7 @@ for (const FS of fileSystems) {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
         const dir = tmp.path
         const filePath = dir.join("notes.txt")
-        await fileSystem.writeFile(filePath, "hello")
+        ;(await fileSystem.writeFile(filePath, "hello")).unwrap()
 
         expect(await fileSystem.get(filePath)).toEqual({ type: "file", path: filePath })
       })
@@ -227,11 +254,11 @@ for (const FS of fileSystems) {
         const dir = tmp.path
 
         const notesFilePath = dir.join("notes.txt")
-        await fileSystem.writeFile(notesFilePath, "hello")
+        ;(await fileSystem.writeFile(notesFilePath, "hello")).unwrap()
         const secretDirPath = dir.join("secret")
-        await fileSystem.createDirectory(secretDirPath, { recursive: false })
+        ;(await fileSystem.createDirectory(secretDirPath, { recursive: false })).unwrap()
         const secretFilePath = secretDirPath.join("secret-notes.txt")
-        await fileSystem.writeFile(secretFilePath, "goodbye")
+        ;(await fileSystem.writeFile(secretFilePath, "goodbye")).unwrap()
 
         const result = await fileSystem.listDirectory(dir)
 
@@ -249,7 +276,7 @@ for (const FS of fileSystems) {
         expect(await fileSystem.listDirectory(tmp.path)).toEqual(Ok([]))
       })
 
-      it("throws when listing not-existing dir", async () => {
+      it("returns error when listing not-existing dir", async () => {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
 
         const path = tmp.path.join("/not-existing")
@@ -258,10 +285,10 @@ for (const FS of fileSystems) {
         )
       })
 
-      it("throws when listing file not dir", async () => {
+      it("returns error when listing file not dir", async () => {
         await using tmp = await fileSystem.createTempDir("superlib-tests")
         const filePath = tmp.path.join("file.txt")
-        await fileSystem.writeFile(filePath, "hello world!")
+        ;(await fileSystem.writeFile(filePath, "hello world!")).unwrap()
 
         expect(await fileSystem.listDirectory(filePath)).toEqual(
           Err({ type: "fs/not-a-dir", path: filePath }),

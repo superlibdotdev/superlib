@@ -14,6 +14,7 @@ import * as pathModule from "node:path"
 
 import type {
   DirAccessError,
+  DirCreateError,
   DirRemoveError,
   FileAccessError,
   FileSystemEntry,
@@ -52,6 +53,8 @@ export class FileSystem implements IFileSystem {
           switch (error.code) {
             case "EISDIR":
               return { type: "fs/file-is-a-dir", path }
+            case "ENOENT":
+              return { type: "fs/parent-not-found", path }
           }
         }
 
@@ -110,8 +113,27 @@ export class FileSystem implements IFileSystem {
     )
   }
 
-  async createDirectory(path: AbsolutePath, options: { recursive: boolean }): Promise<void> {
-    await mkdir(path.path, { recursive: options.recursive })
+  async createDirectory(
+    path: AbsolutePath,
+    options: { recursive: boolean },
+  ): Promise<Result<void, DirCreateError>> {
+    return ResultAsync.try(
+      () => mkdir(path.path, { recursive: options.recursive }),
+      (error): DirCreateError => {
+        if (error instanceof Error && "code" in error) {
+          switch (error.code) {
+            case "EEXIST":
+              return { type: "fs/already-exists", path }
+            case "ENOENT":
+              return { type: "fs/parent-not-found", path }
+          }
+        }
+
+        return { type: "fs/other", cause: error }
+      },
+    )
+      .andThen(() => Ok())
+      .toPromise()
   }
 
   async removeDirectory(
