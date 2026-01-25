@@ -222,4 +222,34 @@ describe(memoize.name, () => {
     expect(results).toHaveLength(7)
     expect(results).toEqual([NaN, Infinity, -Infinity, null, undefined, 0, -0])
   })
+
+  it("preserves this binding when called as a method", () => {
+    const obj = {
+      multiplier: 10,
+      compute: memoize(function (this: { multiplier: number }, n: number) {
+        return n * this.multiplier
+      }),
+    }
+
+    expect(obj.compute(5)).toBe(50)
+    expect(obj.compute(5)).toBe(50)
+  })
+
+  it("preserves this binding with different contexts", () => {
+    let callCount = 0
+    const memoizedFn = memoize(
+      function (this: { value: number }, n: number) {
+        callCount++
+        return n + this.value
+      },
+      ([n]) => String(n),
+    )
+
+    const obj1 = { value: 100, fn: memoizedFn }
+    const obj2 = { value: 200, fn: memoizedFn }
+
+    expect(obj1.fn(5)).toBe(105)
+    expect(obj2.fn(5)).toBe(105)
+    expect(callCount).toBe(1)
+  })
 })

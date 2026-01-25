@@ -1,28 +1,28 @@
 import type { Primitive } from "../types"
 
-export function memoize<TArgs extends Primitive[], TResult>(
-  fn: (...args: TArgs) => TResult,
+export function memoize<TThis, TArgs extends Primitive[], TResult>(
+  fn: (this: TThis, ...args: TArgs) => TResult,
   keySerializer?: (args: TArgs) => string,
-): (...args: TArgs) => TResult
+): (this: TThis, ...args: TArgs) => TResult
 
-export function memoize<TArgs extends unknown[], TResult>(
-  fn: (...args: TArgs) => TResult,
+export function memoize<TThis, TArgs extends unknown[], TResult>(
+  fn: (this: TThis, ...args: TArgs) => TResult,
   keySerializer: (args: TArgs) => string,
-): (...args: TArgs) => TResult
+): (this: TThis, ...args: TArgs) => TResult
 
-export function memoize<TArgs extends unknown[], TResult>(
-  fn: (...args: TArgs) => TResult,
+export function memoize<TThis, TArgs extends unknown[], TResult>(
+  fn: (this: TThis, ...args: TArgs) => TResult,
   keySerializer?: (args: TArgs) => string,
-): (...args: TArgs) => TResult {
+): (this: TThis, ...args: TArgs) => TResult {
   const cache = new Map<string, TResult>()
   const serializer = keySerializer ?? (defaultTupleSerializer as (args: TArgs) => string)
 
-  return (...args: TArgs): TResult => {
+  return function (this: TThis, ...args: TArgs): TResult {
     const key = serializer(args)
     if (cache.has(key)) {
       return cache.get(key) as TResult
     }
-    const result = fn(...args)
+    const result = fn.apply(this, args)
     cache.set(key, result)
     return result
   }
