@@ -125,7 +125,7 @@ describe(Memoize.name, () => {
     let callCount = 0
 
     class Calculator {
-      constructor(private readonly offset: number) { }
+      constructor(private readonly offset: number) {}
 
       @Memoize()
       double(n: number): number {
@@ -190,7 +190,7 @@ describe(Memoize.name, () => {
     let callCount = 0
 
     class Wrapper {
-      constructor(private readonly prefix: string) { }
+      constructor(private readonly prefix: string) {}
 
       @Memoize(([path]: [PathLike]) => path.path)
       async resolve(path: PathLike): Promise<string> {
