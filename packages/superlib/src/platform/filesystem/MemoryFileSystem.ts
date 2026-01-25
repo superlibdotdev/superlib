@@ -29,19 +29,6 @@ export class MemoryFileSystem implements IFileSystem {
     this.seedFromGenesis(AbsolutePath("/"), genesis)
   }
 
-  private seedFromGenesis(cwd: AbsolutePath, genesis: FsGenesis): void {
-    for (const [key, value] of Object.entries(genesis)) {
-      const path = cwd.join(key)
-      if (typeof value === "string") {
-        this.createDirectorySync(path.getDirPath(), { recursive: true })
-        this.writeFileSync(path, value)
-      } else {
-        this.createDirectorySync(path, { recursive: true })
-        this.seedFromGenesis(path, value)
-      }
-    }
-  }
-
   async readFile(path: AbsolutePath): Promise<Result<string, FileAccessError>> {
     const entry = this.entries.get(path)
 
@@ -60,54 +47,12 @@ export class MemoryFileSystem implements IFileSystem {
     return this.writeFileSync(path, contents)
   }
 
-  writeFileSync(path: AbsolutePath, contents: string): Result<void, FileWriteError> {
-    this.createDirectorySync(path.getDirPath(), { recursive: true })
-
-    const entry = this.entries.get(path)
-    if (entry?.type === "dir") {
-      return Err({ type: "fs/file-is-a-dir", path })
-    }
-
-    this.entries.set(path, { type: "file", content: contents })
-
-    return Ok()
-  }
-
   async exists(path: AbsolutePath): Promise<boolean> {
     return (await this.get(path)) !== undefined
   }
 
   async createDirectory(dirPath: AbsolutePath, options: { recursive: boolean }): Promise<void> {
     this.createDirectorySync(dirPath, options)
-  }
-
-  createDirectorySync(dirPath: AbsolutePath, options: { recursive: boolean }): void {
-    const entry = this.entries.get(dirPath)
-    if (entry?.type === "dir") {
-      if (!options.recursive) {
-        throw new Error(`Directory already exists: ${dirPath.path}`)
-      }
-      return
-    }
-
-    const parentPath = dirPath.getDirPath()
-    if (!options.recursive && !this.entries.get(parentPath)) {
-      throw new Error(`Parent directory does not exist: ${parentPath.path}`)
-    }
-
-    if (options.recursive) {
-      let current = dirPath
-      while (!this.entries.has(current)) {
-        this.entries.set(current, { type: "dir" })
-        const parent = current.getDirPath()
-        if (parent.eq(current)) {
-          break
-        }
-        current = parent
-      }
-    } else {
-      this.entries.set(dirPath, { type: "dir" })
-    }
   }
 
   async removeDirectory(
@@ -182,6 +127,61 @@ export class MemoryFileSystem implements IFileSystem {
     return {
       type: entry.type,
       path,
+    }
+  }
+
+  private seedFromGenesis(cwd: AbsolutePath, genesis: FsGenesis): void {
+    for (const [key, value] of Object.entries(genesis)) {
+      const path = cwd.join(key)
+      if (typeof value === "string") {
+        this.createDirectorySync(path.getDirPath(), { recursive: true })
+        this.writeFileSync(path, value)
+      } else {
+        this.createDirectorySync(path, { recursive: true })
+        this.seedFromGenesis(path, value)
+      }
+    }
+  }
+
+  private writeFileSync(path: AbsolutePath, contents: string): Result<void, FileWriteError> {
+    this.createDirectorySync(path.getDirPath(), { recursive: true })
+
+    const entry = this.entries.get(path)
+    if (entry?.type === "dir") {
+      return Err({ type: "fs/file-is-a-dir", path })
+    }
+
+    this.entries.set(path, { type: "file", content: contents })
+
+    return Ok()
+  }
+
+  private createDirectorySync(dirPath: AbsolutePath, options: { recursive: boolean }): void {
+    const entry = this.entries.get(dirPath)
+    if (entry?.type === "dir") {
+      if (!options.recursive) {
+        throw new Error(`Directory already exists: ${dirPath.path}`)
+      }
+      return
+    }
+
+    const parentPath = dirPath.getDirPath()
+    if (!options.recursive && !this.entries.get(parentPath)) {
+      throw new Error(`Parent directory does not exist: ${parentPath.path}`)
+    }
+
+    if (options.recursive) {
+      let current = dirPath
+      while (!this.entries.has(current)) {
+        this.entries.set(current, { type: "dir" })
+        const parent = current.getDirPath()
+        if (parent.eq(current)) {
+          break
+        }
+        current = parent
+      }
+    } else {
+      this.entries.set(dirPath, { type: "dir" })
     }
   }
 
