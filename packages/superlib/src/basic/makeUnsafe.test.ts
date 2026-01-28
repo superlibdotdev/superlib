@@ -7,129 +7,160 @@ import { Err, Ok, type Result } from "./Result"
 import { ResultAsync } from "./ResultAsync"
 
 describe(makeUnsafe.name, () => {
-  describe("synchronous Result methods", () => {
-    it("unwraps Ok results", () => {
-      const obj = {
+  describe("class wrapping", () => {
+    it("returns a constructor that can be instantiated", () => {
+      class MyClass {
         getValue(): Result<number, { type: "error" }> {
           return Ok(42)
-        },
+        }
       }
 
-      const unsafe = makeUnsafe(obj)
-      const result = unsafe.getValue()
+      const UnsafeMyClass = makeUnsafe(MyClass)
+      const instance = new UnsafeMyClass()
+
+      expect(instance).toBeInstanceOf(MyClass)
+    })
+  })
+
+  describe("synchronous Result methods", () => {
+    it("unwraps Ok results", () => {
+      class MyClass {
+        getValue(): Result<number, { type: "error" }> {
+          return Ok(42)
+        }
+      }
+
+      const UnsafeMyClass = makeUnsafe(MyClass)
+      const instance = new UnsafeMyClass()
+      const result = instance.getValue()
 
       expect(result).toBe(42)
     })
 
     it("throws on Err results", () => {
-      const obj = {
+      class MyClass {
         getValue(): Result<number, { type: "boom" }> {
           return Err({ type: "boom" })
-        },
+        }
       }
 
-      const unsafe = makeUnsafe(obj)
+      const UnsafeMyClass = makeUnsafe(MyClass)
+      const instance = new UnsafeMyClass()
 
-      expect(() => unsafe.getValue()).toThrow()
+      expect(() => instance.getValue()).toThrow()
     })
   })
 
   describe("async Result methods", () => {
     it("unwraps Promise<Ok>", async () => {
-      const obj = {
+      class MyClass {
         async getValue(): Promise<Result<string, { type: "error" }>> {
           return Ok("hello")
-        },
+        }
       }
 
-      const unsafe = makeUnsafe(obj)
-      const result = await unsafe.getValue()
+      const UnsafeMyClass = makeUnsafe(MyClass)
+      const instance = new UnsafeMyClass()
+      const result = await instance.getValue()
 
       expect(result).toBe("hello")
     })
 
     it("rejects Promise on Err", async () => {
-      const obj = {
+      class MyClass {
         async getValue(): Promise<Result<string, { type: "boom" }>> {
           return Err({ type: "boom" })
-        },
+        }
       }
 
-      const unsafe = makeUnsafe(obj)
+      const UnsafeMyClass = makeUnsafe(MyClass)
+      const instance = new UnsafeMyClass()
 
-      expect(unsafe.getValue()).rejects.toEqual({ type: "boom" })
+      expect(instance.getValue()).rejects.toEqual({ type: "boom" })
     })
   })
 
   describe("ResultAsync methods", () => {
     it("unwraps ResultAsync Ok values", async () => {
-      const obj = {
+      class MyClass {
         getValue(): ResultAsync<number, { type: "error" }> {
           return new ResultAsync(Promise.resolve(Ok(42)))
-        },
+        }
       }
 
-      const unsafe = makeUnsafe(obj)
-      const result = await unsafe.getValue()
+      const UnsafeMyClass = makeUnsafe(MyClass)
+      const instance = new UnsafeMyClass()
+      const result = await instance.getValue()
 
       expect(result).toBe(42)
     })
 
     it("rejects on ResultAsync Err", async () => {
-      const obj = {
+      class MyClass {
         getValue(): ResultAsync<number, { type: "boom" }> {
           return new ResultAsync(Promise.resolve(Err({ type: "boom" })))
-        },
+        }
       }
 
-      const unsafe = makeUnsafe(obj)
+      const UnsafeMyClass = makeUnsafe(MyClass)
+      const instance = new UnsafeMyClass()
 
-      expect(unsafe.getValue()).rejects.toEqual({ type: "boom" })
+      expect(instance.getValue()).rejects.toEqual({ type: "boom" })
     })
   })
 
   describe("non-Result returns", () => {
     it("passes through primitive returns unchanged", () => {
-      const obj = {
+      class MyClass {
         getNumber(): number {
           return 42
-        },
+        }
+
         getString(): string {
           return "hello"
-        },
+        }
       }
 
-      const unsafe = makeUnsafe(obj)
+      const UnsafeMyClass = makeUnsafe(MyClass)
+      const instance = new UnsafeMyClass()
 
-      expect(unsafe.getNumber()).toBe(42)
-      expect(unsafe.getString()).toBe("hello")
+      expect(instance.getNumber()).toBe(42)
+      expect(instance.getString()).toBe("hello")
     })
 
     it("passes through Promise returns unchanged", async () => {
-      const obj = {
+      class MyClass {
         async getValue(): Promise<string> {
           return "async"
-        },
+        }
       }
 
-      const unsafe = makeUnsafe(obj)
-      const result = await unsafe.getValue()
+      const UnsafeMyClass = makeUnsafe(MyClass)
+      const instance = new UnsafeMyClass()
+      const result = await instance.getValue()
 
       expect(result).toBe("async")
     })
   })
 
-  describe("properties", () => {
-    it("passes through non-function properties unchanged", () => {
-      const obj = {
-        name: "test",
-        count: 42,
+  describe("constructor arguments", () => {
+    it("passes constructor arguments to base class", () => {
+      class MyClass {
+        constructor(
+          private readonly multiplier: number,
+          private readonly prefix: string,
+        ) {}
+
+        calculate(n: number): Result<string, { type: "error" }> {
+          return Ok(`${this.prefix}${n * this.multiplier}`)
+        }
       }
 
-      const unsafe = makeUnsafe(obj)
+      const UnsafeMyClass = makeUnsafe(MyClass)
+      const instance = new UnsafeMyClass(10, "Result: ")
+      const result = instance.calculate(5)
 
-      expect(unsafe.name).toBe("test")
-      expect(unsafe.count).toBe(42)
+      expect(result).toBe("Result: 50")
     })
   })
 
@@ -143,9 +174,9 @@ describe(makeUnsafe.name, () => {
         }
       }
 
-      const counter = new Counter()
-      const unsafe = makeUnsafe(counter)
-      const result = unsafe.getValue()
+      const UnsafeCounter = makeUnsafe(Counter)
+      const instance = new UnsafeCounter()
+      const result = instance.getValue()
 
       expect(result).toBe(10)
     })
@@ -154,15 +185,17 @@ describe(makeUnsafe.name, () => {
   describe("void results", () => {
     it("handles Result<void, E> correctly", () => {
       let called = false
-      const obj = {
+
+      class MyClass {
         doSomething(): Result<void, { type: "error" }> {
           called = true
           return Ok()
-        },
+        }
       }
 
-      const unsafe = makeUnsafe(obj)
-      const result = unsafe.doSomething()
+      const UnsafeMyClass = makeUnsafe(MyClass)
+      const instance = new UnsafeMyClass()
+      const result = instance.doSomething()
 
       expect(result).toBeUndefined()
       expect(called).toBe(true)
@@ -170,49 +203,53 @@ describe(makeUnsafe.name, () => {
   })
 
   describe("MemoryFileSystem integration", () => {
+    const UnsafeMemoryFileSystem = makeUnsafe(MemoryFileSystem)
+
+    it("can be instantiated with genesis argument", () => {
+      const fs = new UnsafeMemoryFileSystem({
+        "test.txt": "hello world",
+      })
+
+      expect(fs).toBeInstanceOf(MemoryFileSystem)
+    })
+
     it("throws FileAccessError when file not found", async () => {
-      const fs = new MemoryFileSystem()
+      const fs = new UnsafeMemoryFileSystem()
 
-      const unsafeFs = makeUnsafe(fs)
-
-      expect(unsafeFs.readFile(AbsolutePath("/nonexistent.txt"))).rejects.toEqual({
+      expect(fs.readFile(AbsolutePath("/nonexistent.txt"))).rejects.toEqual({
         type: "fs/file-not-found",
         path: AbsolutePath("/nonexistent.txt"),
       })
     })
 
     it("returns string content when file exists", async () => {
-      const fs = new MemoryFileSystem({
+      const fs = new UnsafeMemoryFileSystem({
         "test.txt": "hello world",
       })
 
-      const unsafeFs = makeUnsafe(fs)
-      const content = await unsafeFs.readFile(AbsolutePath("/test.txt"))
+      const content = await fs.readFile(AbsolutePath("/test.txt"))
 
       expect(content).toBe("hello world")
     })
 
     it("writeFile works and returns void", async () => {
-      const fs = new MemoryFileSystem()
+      const fs = new UnsafeMemoryFileSystem()
 
-      const unsafeFs = makeUnsafe(fs)
-      const result = await unsafeFs.writeFile(AbsolutePath("/new.txt"), "content")
+      const result = await fs.writeFile(AbsolutePath("/new.txt"), "content")
 
       expect(result).toBeUndefined()
 
-      const content = await unsafeFs.readFile(AbsolutePath("/new.txt"))
+      const content = await fs.readFile(AbsolutePath("/new.txt"))
       expect(content).toBe("content")
     })
 
     it("exists passes through boolean unchanged", async () => {
-      const fs = new MemoryFileSystem({
+      const fs = new UnsafeMemoryFileSystem({
         "exists.txt": "content",
       })
 
-      const unsafeFs = makeUnsafe(fs)
-
-      expect(await unsafeFs.exists(AbsolutePath("/exists.txt"))).toBe(true)
-      expect(await unsafeFs.exists(AbsolutePath("/missing.txt"))).toBe(false)
+      expect(await fs.exists(AbsolutePath("/exists.txt"))).toBe(true)
+      expect(await fs.exists(AbsolutePath("/missing.txt"))).toBe(false)
     })
   })
 })
