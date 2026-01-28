@@ -9,7 +9,7 @@ import { memoize } from "../../../basic/memoize"
 
 export interface GlobFs {
   get(path: AbsolutePath): Promise<FileSystemEntry | undefined>
-  listDirectory(path: AbsolutePath): Promise<Result<FileSystemEntry[], DirAccessError>>
+  listDir(path: AbsolutePath): Promise<Result<FileSystemEntry[], DirAccessError>>
 }
 
 export function createCachedFs(fs: IFileSystem): GlobFs {
@@ -18,8 +18,8 @@ export function createCachedFs(fs: IFileSystem): GlobFs {
       (path: AbsolutePath) => fs.get(path),
       ([path]) => path.path,
     ),
-    listDirectory: memoize(
-      (path: AbsolutePath) => fs.listDirectory(path),
+    listDir: memoize(
+      (path: AbsolutePath) => fs.listDir(path),
       ([path]) => path.path,
     ),
   }

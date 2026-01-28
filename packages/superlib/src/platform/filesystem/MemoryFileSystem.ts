@@ -1,5 +1,8 @@
 import type {
   DirAccessError,
+  DirCreateError,
+  DirNotADirError,
+  DirNotEmptyError,
   DirRemoveError,
   FileAccessError,
   FileSystemEntry,
@@ -51,17 +54,40 @@ export class MemoryFileSystem implements IFileSystem {
     return (await this.get(path)) !== undefined
   }
 
-  async createDirectory(dirPath: AbsolutePath, options: { recursive: boolean }): Promise<void> {
-    this.createDirectorySync(dirPath, options)
+  async createDir(
+    dirPath: AbsolutePath,
+    options: { recursive: boolean } = { recursive: true },
+  ): Promise<Result<void, DirCreateError>> {
+    return this.createDirectorySync(dirPath, options)
   }
 
-  async removeDirectory(
+  async removeDir(
+    dirPath: AbsolutePath,
+    options: { recursive: true; force: true },
+  ): Promise<Result<void, never>>
+  async removeDir(
+    dirPath: AbsolutePath,
+    options: { recursive: true; force: false },
+  ): Promise<Result<void, DirAccessError>>
+  async removeDir(
+    dirPath: AbsolutePath,
+    options: { recursive: false; force: true },
+  ): Promise<Result<void, DirNotEmptyError | DirNotADirError>>
+  async removeDir(
+    dirPath: AbsolutePath,
+    options: { recursive: false; force: false },
+  ): Promise<Result<void, DirRemoveError>>
+  async removeDir(
     dirPath: AbsolutePath,
     options: { recursive: boolean; force: boolean },
   ): Promise<Result<void, DirRemoveError>> {
     const entry = this.entries.get(dirPath)
 
     if (entry?.type === "file") {
+      if (options.recursive && options.force) {
+        this.entries.delete(dirPath)
+        return Ok()
+      }
       return Err({ type: "fs/not-a-dir", path: dirPath })
     }
 
@@ -88,8 +114,7 @@ export class MemoryFileSystem implements IFileSystem {
 
   async createTempDir(prefix: string): Promise<TempDirHandle> {
     const tempDirPath = this.root.join("tmp", `${prefix}${this.tempDirCounter++}`)
-
-    await this.createDirectory(tempDirPath, { recursive: true })
+    ;(await this.createDir(tempDirPath, { recursive: true })).unwrap()
 
     const removeTempDir = (): void => {
       this.removeDirectoryRecursive(tempDirPath)
@@ -103,7 +128,7 @@ export class MemoryFileSystem implements IFileSystem {
     }
   }
 
-  async listDirectory(path: AbsolutePath): Promise<Result<FileSystemEntry[], DirAccessError>> {
+  async listDir(path: AbsolutePath): Promise<Result<FileSystemEntry[], DirAccessError>> {
     const entry = this.entries.get(path)
 
     if (entry?.type === "file") {
@@ -134,17 +159,21 @@ export class MemoryFileSystem implements IFileSystem {
     for (const [key, value] of Object.entries(genesis)) {
       const path = cwd.join(key)
       if (typeof value === "string") {
-        this.createDirectorySync(path.getDirPath(), { recursive: true })
-        this.writeFileSync(path, value)
+        this.createDirectorySync(path.getDirPath(), { recursive: true }).unwrap()
+        this.writeFileSync(path, value).unwrap()
       } else {
-        this.createDirectorySync(path, { recursive: true })
+        this.createDirectorySync(path, { recursive: true }).unwrap()
         this.seedFromGenesis(path, value)
       }
     }
   }
 
   private writeFileSync(path: AbsolutePath, contents: string): Result<void, FileWriteError> {
-    this.createDirectorySync(path.getDirPath(), { recursive: true })
+    const parentPath = path.getDirPath()
+    const parentEntry = this.entries.get(parentPath)
+    if (!parentEntry) {
+      return Err({ type: "fs/parent-not-found", path })
+    }
 
     const entry = this.entries.get(path)
     if (entry?.type === "dir") {
@@ -156,18 +185,21 @@ export class MemoryFileSystem implements IFileSystem {
     return Ok()
   }
 
-  private createDirectorySync(dirPath: AbsolutePath, options: { recursive: boolean }): void {
+  private createDirectorySync(
+    dirPath: AbsolutePath,
+    options: { recursive: boolean },
+  ): Result<void, DirCreateError> {
     const entry = this.entries.get(dirPath)
     if (entry?.type === "dir") {
       if (!options.recursive) {
-        throw new Error(`Directory already exists: ${dirPath.path}`)
+        return Err({ type: "fs/already-exists", path: dirPath })
       }
-      return
+      return Ok()
     }
 
     const parentPath = dirPath.getDirPath()
     if (!options.recursive && !this.entries.get(parentPath)) {
-      throw new Error(`Parent directory does not exist: ${parentPath.path}`)
+      return Err({ type: "fs/parent-not-found", path: dirPath })
     }
 
     if (options.recursive) {
@@ -183,6 +215,8 @@ export class MemoryFileSystem implements IFileSystem {
     } else {
       this.entries.set(dirPath, { type: "dir" })
     }
+
+    return Ok()
   }
 
   private getDirectChildren(dir: AbsolutePath): FileSystemEntry[] {

@@ -14,6 +14,9 @@ import * as pathModule from "node:path"
 
 import type {
   DirAccessError,
+  DirCreateError,
+  DirNotADirError,
+  DirNotEmptyError,
   DirRemoveError,
   FileAccessError,
   FileSystemEntry,
@@ -52,6 +55,8 @@ export class FileSystem implements IFileSystem {
           switch (error.code) {
             case "EISDIR":
               return { type: "fs/file-is-a-dir", path }
+            case "ENOENT":
+              return { type: "fs/parent-not-found", path }
           }
         }
 
@@ -89,7 +94,7 @@ export class FileSystem implements IFileSystem {
     }
   }
 
-  async listDirectory(path: AbsolutePath): Promise<Result<FileSystemEntry[], DirAccessError>> {
+  async listDir(path: AbsolutePath): Promise<Result<FileSystemEntry[], DirAccessError>> {
     const entry = await this.get(path)
     if (entry === undefined) {
       return Err({ type: "fs/dir-not-found", path })
@@ -110,34 +115,58 @@ export class FileSystem implements IFileSystem {
     )
   }
 
-  async createDirectory(path: AbsolutePath, options: { recursive: boolean }): Promise<void> {
-    await mkdir(path.path, { recursive: options.recursive })
+  async createDir(
+    path: AbsolutePath,
+    options: { recursive: boolean } = { recursive: true },
+  ): Promise<Result<void, DirCreateError>> {
+    return ResultAsync.try(
+      () => mkdir(path.path, { recursive: options.recursive }),
+      (error): DirCreateError => {
+        if (error instanceof Error && "code" in error) {
+          switch (error.code) {
+            case "EEXIST":
+              return { type: "fs/already-exists", path }
+            case "ENOENT":
+              return { type: "fs/parent-not-found", path }
+          }
+        }
+
+        return { type: "fs/other", cause: error }
+      },
+    )
+      .andThen(() => Ok())
+      .toPromise()
   }
 
-  async removeDirectory(
+  async removeDir(
+    path: AbsolutePath,
+    options: { recursive: true; force: true },
+  ): Promise<Result<void, never>>
+  async removeDir(
+    path: AbsolutePath,
+    options: { recursive: true; force: false },
+  ): Promise<Result<void, DirAccessError>>
+  async removeDir(
+    path: AbsolutePath,
+    options: { recursive: false; force: true },
+  ): Promise<Result<void, DirNotEmptyError | DirNotADirError>>
+  async removeDir(
+    path: AbsolutePath,
+    options: { recursive: false; force: false },
+  ): Promise<Result<void, DirRemoveError>>
+  async removeDir(
     path: AbsolutePath,
     options: { recursive: boolean; force: boolean },
   ): Promise<Result<void, DirRemoveError>> {
-    // @todo it might be possible to simplify this
-    if (options.recursive) {
-      return ResultAsync.try(
-        () => rm(path.path, { recursive: true, force: options.force }),
-        (error): DirRemoveError => {
-          if (error instanceof Error && "code" in error) {
-            switch (error.code) {
-              case "ENOENT":
-                return { type: "fs/dir-not-found", path }
-              case "ENOTDIR":
-                return { type: "fs/not-a-dir", path }
-            }
-          }
-          throw error
-        },
-      ).toPromise()
-    }
-
     return ResultAsync.try<void, DirRemoveError>(
-      () => rmdir(path.path),
+      async () => {
+        if (options.recursive) {
+          await rm(path.path, { recursive: true, force: options.force })
+        } else {
+          // to rm empty dir (recursive=false) we need to use rmdir
+          await rmdir(path.path)
+        }
+      },
       (error) => {
         if (error instanceof Error && "code" in error) {
           switch (error.code) {

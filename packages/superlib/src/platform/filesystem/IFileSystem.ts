@@ -1,16 +1,31 @@
 import type { Result } from "../../basic/Result"
 import type { AbsolutePath } from "./AbsolutePath"
 
-// @todo: this whole interface needs to be reviewed and additional error test cases need to be written
 export interface IFileSystem {
   readFile(path: AbsolutePath): Promise<Result<string, FileAccessError>>
   writeFile(path: AbsolutePath, contents: string): Promise<Result<void, FileWriteError>>
-  createDirectory(path: AbsolutePath, options: { recursive: boolean }): Promise<void>
-  removeDirectory(
+
+  createDir(
     path: AbsolutePath,
-    options: { recursive: boolean; force: boolean },
+    options?: { recursive: boolean },
+  ): Promise<Result<void, DirCreateError>>
+  removeDir(
+    path: AbsolutePath,
+    options: { recursive: true; force: true },
+  ): Promise<Result<void, never>>
+  removeDir(
+    path: AbsolutePath,
+    options: { recursive: true; force: false },
+  ): Promise<Result<void, DirAccessError>>
+  removeDir(
+    path: AbsolutePath,
+    options: { recursive: false; force: true },
+  ): Promise<Result<void, DirNotEmptyError | DirNotADirError>>
+  removeDir(
+    path: AbsolutePath,
+    options: { recursive: false; force: false },
   ): Promise<Result<void, DirRemoveError>>
-  listDirectory(path: AbsolutePath): Promise<Result<FileSystemEntry[], DirAccessError>>
+  listDir(path: AbsolutePath): Promise<Result<FileSystemEntry[], DirAccessError>>
 
   get(path: AbsolutePath): Promise<FileSystemEntry | undefined>
   exists(path: AbsolutePath): Promise<boolean>
@@ -48,18 +63,43 @@ export type FileWriteError =
       path: AbsolutePath
     }
   | {
+      type: "fs/parent-not-found"
+      path: AbsolutePath
+    }
+  | {
       type: "fs/other"
       cause: unknown
     }
 
-export type DirAccessError =
-  | {
-      type: "fs/dir-not-found"
-      path: AbsolutePath
-    }
-  | {
-      type: "fs/not-a-dir"
-      path: AbsolutePath
-    }
+export type DirNotFoundError = {
+  type: "fs/dir-not-found"
+  path: AbsolutePath
+}
 
-export type DirRemoveError = DirAccessError | { type: "fs/dir-not-empty"; path: AbsolutePath }
+export type DirNotADirError = {
+  type: "fs/not-a-dir"
+  path: AbsolutePath
+}
+
+export type DirNotEmptyError = {
+  type: "fs/dir-not-empty"
+  path: AbsolutePath
+}
+
+export type DirAccessError = DirNotFoundError | DirNotADirError
+
+export type DirRemoveError = DirAccessError | DirNotEmptyError
+
+export type DirCreateError =
+  | {
+      type: "fs/parent-not-found"
+      path: AbsolutePath
+    }
+  | {
+      type: "fs/already-exists"
+      path: AbsolutePath
+    }
+  | {
+      type: "fs/other"
+      cause: unknown
+    }
