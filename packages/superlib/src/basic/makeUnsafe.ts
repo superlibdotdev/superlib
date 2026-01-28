@@ -2,6 +2,12 @@ import { Result, type TaggedError } from "./Result"
 import { ResultAsync } from "./ResultAsync"
 
 /**
+ * Symbol used to store the original prototype on unsafe instances.
+ * This allows `asSafe()` to recover the safe API.
+ */
+const SAFE_PROTO = Symbol("__safeProto")
+
+/**
  * Extracts the value type from a Result, unwrapping it.
  * Non-Result types pass through unchanged.
  */
@@ -83,6 +89,8 @@ function unwrapIfResult(value: unknown): unknown {
  */
 export function makeUnsafe<C extends new (...args: any[]) => any>(BaseClass: C): UnsafeClass<C> {
   return class extends BaseClass {
+    [SAFE_PROTO] = BaseClass.prototype
+
     constructor(...args: any[]) {
       super(...args)
 
@@ -105,4 +113,35 @@ export function makeUnsafe<C extends new (...args: any[]) => any>(BaseClass: C):
       }
     }
   } as unknown as UnsafeClass<C>
+}
+
+/**
+ * Converts an unsafe instance back to its safe API.
+ * If already safe (no SAFE_PROTO symbol), returns as-is.
+ *
+ * @example
+ * ```typescript
+ * const UnsafeFs = makeUnsafe(MemoryFileSystem)
+ * const unsafeFs = new UnsafeFs()
+ *
+ * const safeFs = asSafe(unsafeFs)
+ * const result = await safeFs.readFile(path)  // Returns Result<string, E>
+ * ```
+ */
+export function asSafe<T extends object>(instance: T | Unsafe<T>): T {
+  const proto = (instance as any)[SAFE_PROTO]
+  if (!proto) return instance as T
+
+  const safeWrapper = Object.create(null)
+
+  for (const key of Object.getOwnPropertyNames(proto)) {
+    if (key === "constructor") continue
+
+    const method = proto[key]
+    if (typeof method === "function") {
+      safeWrapper[key] = (...args: unknown[]) => method.call(instance, ...args)
+    }
+  }
+
+  return safeWrapper as T
 }

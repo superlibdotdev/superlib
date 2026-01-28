@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test"
 
 import { AbsolutePath } from "../platform/filesystem/AbsolutePath"
 import { MemoryFileSystem } from "../platform/filesystem/MemoryFileSystem"
-import { makeUnsafe } from "./makeUnsafe"
+import { asSafe, makeUnsafe } from "./makeUnsafe"
 import { Err, Ok, type Result } from "./Result"
 import { ResultAsync } from "./ResultAsync"
 
@@ -251,5 +251,36 @@ describe(makeUnsafe.name, () => {
       expect(await fs.exists(AbsolutePath("/exists.txt"))).toBe(true)
       expect(await fs.exists(AbsolutePath("/missing.txt"))).toBe(false)
     })
+  })
+})
+
+describe(asSafe.name, () => {
+  it("returns safe instance unchanged", () => {
+    const fs = new MemoryFileSystem()
+
+    const result = asSafe(fs)
+
+    expect(result).toBe(fs)
+  })
+
+  it("converts unsafe instance to safe API", async () => {
+    const UnsafeFs = makeUnsafe(MemoryFileSystem)
+    const unsafeFs = new UnsafeFs({ "test.txt": "content" })
+
+    const safeFs = asSafe(unsafeFs)
+    const result = await safeFs.readFile(AbsolutePath("/test.txt"))
+
+    expect(result.isOk()).toBe(true)
+    expect(result.unwrap()).toBe("content")
+  })
+
+  it("safe wrapper returns Result on error", async () => {
+    const UnsafeFs = makeUnsafe(MemoryFileSystem)
+    const unsafeFs = new UnsafeFs()
+
+    const safeFs = asSafe(unsafeFs)
+    const result = await safeFs.readFile(AbsolutePath("/missing.txt"))
+
+    expect(result.isErr()).toBe(true)
   })
 })
