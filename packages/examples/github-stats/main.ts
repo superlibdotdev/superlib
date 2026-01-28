@@ -34,7 +34,7 @@ async function main(): Promise<void> {
   console.log(`Fetching stats for: ${usernames.join(", ")}`)
   console.log(`Cache directory: ${cacheDir.path}`)
 
-  await fs.createDirectory(cacheDir, { recursive: true })
+  ;(await fs.createDir(cacheDir, { recursive: true })).unwrap()
 
   const cache = new FileSystemCache<GitHubUser>(fs, cacheDir)
   const github = new GitHubApiClient(cache)

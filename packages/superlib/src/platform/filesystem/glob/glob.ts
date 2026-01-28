@@ -72,7 +72,7 @@ async function matchGlobWalker(
     }
 
     case "pattern": {
-      const entities = (await fs.listDirectory(cwd)).unwrap()
+      const entities = (await fs.listDir(cwd)).unwrap()
 
       const newCwds = entities
         .filter((entity) => chunk.pattern.test(entity.path.getName()))
@@ -86,7 +86,7 @@ async function matchGlobWalker(
     }
 
     case "globstar": {
-      const entities = (await fs.listDirectory(cwd)).unwrap()
+      const entities = (await fs.listDir(cwd)).unwrap()
 
       const newCwds = entities.map((m) => m.path)
 
