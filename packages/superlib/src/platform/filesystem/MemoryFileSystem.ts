@@ -16,7 +16,7 @@ import { AbsolutePath } from "./AbsolutePath"
 
 type TempDirHandle = AsyncDisposable & { path: AbsolutePath }
 
-type FsGenesis = { [path: string]: FsGenesis | string }
+export type MemoryFileSystemGenesisState = { [path: string]: MemoryFileSystemGenesisState | string }
 
 type Entry = { type: "file"; content: string } | { type: "dir" }
 
@@ -26,7 +26,7 @@ export class MemoryFileSystem implements IFileSystem {
 
   private tempDirCounter = 0 // used for numbering of temp dirs
 
-  constructor(genesis: FsGenesis = {}) {
+  constructor(genesis: MemoryFileSystemGenesisState = {}) {
     this.entries.set(this.root, { type: "dir" })
 
     this.seedFromGenesis(AbsolutePath("/"), genesis)
@@ -155,7 +155,7 @@ export class MemoryFileSystem implements IFileSystem {
     }
   }
 
-  private seedFromGenesis(cwd: AbsolutePath, genesis: FsGenesis): void {
+  private seedFromGenesis(cwd: AbsolutePath, genesis: MemoryFileSystemGenesisState): void {
     for (const [key, value] of Object.entries(genesis)) {
       const path = cwd.join(key)
       if (typeof value === "string") {

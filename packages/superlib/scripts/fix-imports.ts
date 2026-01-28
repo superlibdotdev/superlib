@@ -2,9 +2,17 @@
  * Post-build script to add .js extensions to relative imports in compiled output.
  * Required for Deno compatibility.
  */
-import { AbsolutePath, FileSystem, glob, type IFileSystem } from "../src/platform/filesystem"
+import {
+  AbsolutePath,
+  FileSystemUnsafe,
+  glob,
+  type IFileSystemUnsafe,
+} from "../src/platform/filesystem"
 
-export async function fixImportsInDirectory(distDir: AbsolutePath, fs: IFileSystem): Promise<void> {
+export async function fixImportsInDirectory(
+  distDir: AbsolutePath,
+  fs: IFileSystemUnsafe,
+): Promise<void> {
   const jsFiles = await glob({ pattern: "**/*.js", cwd: distDir, onlyFiles: true }, fs)
 
   for (const filePath of jsFiles) {
@@ -12,8 +20,8 @@ export async function fixImportsInDirectory(distDir: AbsolutePath, fs: IFileSyst
   }
 }
 
-async function fixImportsInFile(filePath: AbsolutePath, fs: IFileSystem): Promise<void> {
-  const content = (await fs.readFile(filePath)).unwrap()
+async function fixImportsInFile(filePath: AbsolutePath, fs: IFileSystemUnsafe): Promise<void> {
+  const content = await fs.readFile(filePath)
   const fileDir = filePath.getDirPath()
 
   const importRegex = /from\s+["'](\.[^"']+)["']/g
@@ -35,11 +43,11 @@ async function fixImportsInFile(filePath: AbsolutePath, fs: IFileSystem): Promis
   }
 
   if (fixed !== content) {
-    ;(await fs.writeFile(filePath, fixed)).unwrap()
+    await fs.writeFile(filePath, fixed)
   }
 }
 
 if (import.meta.main) {
   const distDir = AbsolutePath(import.meta.dirname).join("../dist")
-  await fixImportsInDirectory(distDir, new FileSystem())
+  await fixImportsInDirectory(distDir, new FileSystemUnsafe())
 }

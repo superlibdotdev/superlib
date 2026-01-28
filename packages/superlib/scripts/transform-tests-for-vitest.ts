@@ -18,11 +18,16 @@
  * Output files have .test-vitest.ts suffix (Bun ignores these)
  */
 import { assert } from "../src"
-import { AbsolutePath, FileSystem, glob, type IFileSystem } from "../src/platform/filesystem"
+import {
+  AbsolutePath,
+  FileSystemUnsafe,
+  glob,
+  type IFileSystemUnsafe,
+} from "../src/platform/filesystem"
 
 export async function transformTestsForVitest(
   srcDir: AbsolutePath,
-  fs: IFileSystem,
+  fs: IFileSystemUnsafe,
 ): Promise<void> {
   const testFiles = await glob({ pattern: "**/*.test.ts", cwd: srcDir, onlyFiles: true }, fs)
 
@@ -33,11 +38,11 @@ export async function transformTestsForVitest(
   }
 }
 
-async function transformTestFile(filePath: AbsolutePath, fs: IFileSystem): Promise<void> {
-  const content = (await fs.readFile(filePath)).unwrap()
+async function transformTestFile(filePath: AbsolutePath, fs: IFileSystemUnsafe): Promise<void> {
+  const content = await fs.readFile(filePath)
   const transformed = transformContent(content)
   const outputPath = AbsolutePath(filePath.path.replace(/\.test\.ts$/, ".test-vitest.ts"))
-  ;(await fs.writeFile(outputPath, transformed)).unwrap()
+  await fs.writeFile(outputPath, transformed)
 }
 
 export function transformContent(content: string): string {
@@ -180,5 +185,5 @@ function transformRejectsToAsync(content: string): string {
 
 if (import.meta.main) {
   const srcDir = AbsolutePath(import.meta.dirname).join("../src")
-  await transformTestsForVitest(srcDir, new FileSystem())
+  await transformTestsForVitest(srcDir, new FileSystemUnsafe())
 }

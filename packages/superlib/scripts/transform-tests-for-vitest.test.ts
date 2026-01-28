@@ -1,11 +1,11 @@
 import { describe, expect, it } from "bun:test"
 
-import { AbsolutePath, MemoryFileSystem } from "../src/platform/filesystem"
+import { AbsolutePath, MemoryFileSystemUnsafe } from "../src/platform/filesystem"
 import { transformContent, transformTestsForVitest } from "./transform-tests-for-vitest"
 
 describe(transformTestsForVitest.name, () => {
   it("transforms test files and creates .test-vitest.ts output files", async () => {
-    const fs = new MemoryFileSystem({
+    const fs = new MemoryFileSystemUnsafe({
       src: {
         "example.test.ts": `import { describe, it, expect, mock } from "bun:test"
 
@@ -20,13 +20,13 @@ describe("example", () => {
 
     await transformTestsForVitest(AbsolutePath("/src"), fs)
 
-    const result = (await fs.readFile(AbsolutePath("/src/example.test-vitest.ts"))).unwrap()
+    const result = await fs.readFile(AbsolutePath("/src/example.test-vitest.ts"))
     expect(result).toContain('import { describe, expect, it, vi } from "vitest"')
     expect(result).toContain("vi.fn(")
   })
 
   it("transforms files in nested directories", async () => {
-    const fs = new MemoryFileSystem({
+    const fs = new MemoryFileSystemUnsafe({
       src: {
         basic: {
           "Result.test.ts": `import { describe, it, expect } from "bun:test"`,
@@ -44,7 +44,7 @@ describe("example", () => {
   })
 
   it("does not transform already-transformed .test-vitest.ts files", async () => {
-    const fs = new MemoryFileSystem({
+    const fs = new MemoryFileSystemUnsafe({
       src: {
         "example.test-vitest.ts": `import { describe, it, expect } from "bun:test`,
       },
@@ -52,7 +52,7 @@ describe("example", () => {
 
     await transformTestsForVitest(AbsolutePath("/src"), fs)
 
-    const vitestContent = (await fs.readFile(AbsolutePath("/src/example.test-vitest.ts"))).unwrap()
+    const vitestContent = await fs.readFile(AbsolutePath("/src/example.test-vitest.ts"))
     expect(vitestContent).toBe('import { describe, it, expect } from "bun:test')
   })
 })

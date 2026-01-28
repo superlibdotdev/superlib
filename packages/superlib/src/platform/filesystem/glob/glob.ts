@@ -1,6 +1,7 @@
 import type { FileSystemEntry, IFileSystem } from "../IFileSystem"
+import type { IFileSystemUnsafe } from "../IFileSystemUnsafe"
 
-import { assert } from "../../../basic"
+import { asSafe, assert } from "../../../basic"
 import { Task } from "../../../task"
 import { AbsolutePath } from "../AbsolutePath"
 import { createCachedFs, type GlobFs } from "./cachedFs"
@@ -14,19 +15,20 @@ export interface GlobOptions {
 
 export async function glob(
   options: GlobOptions & { onlyFiles: true },
-  fs: IFileSystem,
+  fs: IFileSystem | IFileSystemUnsafe,
 ): Promise<AbsolutePath[]>
 export async function glob(
   options: GlobOptions & { onlyFiles?: false },
-  fs: IFileSystem,
+  fs: IFileSystem | IFileSystemUnsafe,
 ): Promise<FileSystemEntry[]>
 export async function glob(
   options: GlobOptions,
-  fs: IFileSystem,
+  fs: IFileSystem | IFileSystemUnsafe,
 ): Promise<FileSystemEntry[] | AbsolutePath[]> {
+  const safeFs = asSafe(fs)
   const cwd = options.cwd
   const chunks = parseGlob(options.pattern)
-  const cachedFs = createCachedFs(fs)
+  const cachedFs = createCachedFs(safeFs)
 
   const entries = await matchGlobWalker(chunks, cwd, cachedFs, new Set())
 
