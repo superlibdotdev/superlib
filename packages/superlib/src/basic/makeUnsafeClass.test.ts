@@ -26,9 +26,11 @@ class MyCounter {
   }
 
   increment(): Result<number, TaggedError> {
+    const result = this.getCounter()
     this._counter += 1
 
-    return this.getCounter()
+    // @note: this is written in such way to use the fact that result should always return Result. Even in unsafe version
+    return result.andThen((r) => Ok(r + 1))
   }
 }
 
@@ -56,6 +58,14 @@ describe(makeUnsafeClass.name, () => {
       const instance = new UnsafeMyCounter()
 
       expect(() => instance.getCounterThrows()).toThrow()
+    })
+
+    it("unwraps Ok results with internal calls", () => {
+      const instance = new UnsafeMyCounter(42)
+
+      const result = instance.increment()
+
+      expect(result).toBe(43)
     })
   })
 
