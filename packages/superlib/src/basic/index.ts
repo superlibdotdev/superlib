@@ -1,6 +1,7 @@
 export * from "./assert"
 export * from "./BaseError"
 export * from "./KeyedMap"
+export * from "./makeUnsafeClass"
 export * from "./memoize"
 export * from "./Result"
 export * from "./ResultAsync"
