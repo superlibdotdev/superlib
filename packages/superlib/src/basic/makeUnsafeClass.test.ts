@@ -1,13 +1,12 @@
-import { unsafe } from "bun"
 import { describe, expect, it } from "bun:test"
 
 import { AbsolutePath } from "../platform/filesystem/AbsolutePath"
 import { MemoryFileSystem } from "../platform/filesystem/MemoryFileSystem"
-import { asSafe, makeUnsafe } from "./makeUnsafe"
+import { asSafe, makeUnsafeClass } from "./makeUnsafeClass"
 import { Err, Ok, type Result, type TaggedError } from "./Result"
 import { ResultAsync } from "./ResultAsync"
 
-describe(makeUnsafe.name, () => {
+describe(makeUnsafeClass.name, () => {
   describe("class wrapping", () => {
     it("returns a constructor that can be instantiated", () => {
       class MyClass {
@@ -16,7 +15,7 @@ describe(makeUnsafe.name, () => {
         }
       }
 
-      const UnsafeMyClass = makeUnsafe(MyClass)
+      const UnsafeMyClass = makeUnsafeClass(MyClass)
       const instance = new UnsafeMyClass()
 
       expect(instance).toBeInstanceOf(MyClass)
@@ -31,7 +30,7 @@ describe(makeUnsafe.name, () => {
         }
       }
 
-      const UnsafeMyClass = makeUnsafe(MyClass)
+      const UnsafeMyClass = makeUnsafeClass(MyClass)
       const instance = new UnsafeMyClass()
       const result = instance.getValue()
 
@@ -45,7 +44,7 @@ describe(makeUnsafe.name, () => {
         }
       }
 
-      const UnsafeMyClass = makeUnsafe(MyClass)
+      const UnsafeMyClass = makeUnsafeClass(MyClass)
       const instance = new UnsafeMyClass()
 
       expect(() => instance.getValue()).toThrow()
@@ -60,7 +59,7 @@ describe(makeUnsafe.name, () => {
         }
       }
 
-      const UnsafeMyClass = makeUnsafe(MyClass)
+      const UnsafeMyClass = makeUnsafeClass(MyClass)
       const instance = new UnsafeMyClass()
       const result = await instance.getValue()
 
@@ -74,7 +73,7 @@ describe(makeUnsafe.name, () => {
         }
       }
 
-      const UnsafeMyClass = makeUnsafe(MyClass)
+      const UnsafeMyClass = makeUnsafeClass(MyClass)
       const instance = new UnsafeMyClass()
 
       expect(instance.getValue()).rejects.toEqual({ type: "boom" })
@@ -89,7 +88,7 @@ describe(makeUnsafe.name, () => {
         }
       }
 
-      const UnsafeMyClass = makeUnsafe(MyClass)
+      const UnsafeMyClass = makeUnsafeClass(MyClass)
       const instance = new UnsafeMyClass()
       const result = await instance.getValue()
 
@@ -103,7 +102,7 @@ describe(makeUnsafe.name, () => {
         }
       }
 
-      const UnsafeMyClass = makeUnsafe(MyClass)
+      const UnsafeMyClass = makeUnsafeClass(MyClass)
       const instance = new UnsafeMyClass()
 
       expect(instance.getValue()).rejects.toEqual({ type: "boom" })
@@ -122,7 +121,7 @@ describe(makeUnsafe.name, () => {
         }
       }
 
-      const UnsafeMyClass = makeUnsafe(MyClass)
+      const UnsafeMyClass = makeUnsafeClass(MyClass)
       const instance = new UnsafeMyClass()
 
       expect(instance.getNumber()).toBe(42)
@@ -136,7 +135,7 @@ describe(makeUnsafe.name, () => {
         }
       }
 
-      const UnsafeMyClass = makeUnsafe(MyClass)
+      const UnsafeMyClass = makeUnsafeClass(MyClass)
       const instance = new UnsafeMyClass()
       const result = await instance.getValue()
 
@@ -157,7 +156,7 @@ describe(makeUnsafe.name, () => {
         }
       }
 
-      const UnsafeMyClass = makeUnsafe(MyClass)
+      const UnsafeMyClass = makeUnsafeClass(MyClass)
       const instance = new UnsafeMyClass(10, "Result: ")
       const result = instance.calculate(5)
 
@@ -175,7 +174,7 @@ describe(makeUnsafe.name, () => {
         }
       }
 
-      const UnsafeCounter = makeUnsafe(Counter)
+      const UnsafeCounter = makeUnsafeClass(Counter)
       const instance = new UnsafeCounter()
       const result = instance.getValue()
 
@@ -194,7 +193,7 @@ describe(makeUnsafe.name, () => {
         }
       }
 
-      const UnsafeMyClass = makeUnsafe(MyClass)
+      const UnsafeMyClass = makeUnsafeClass(MyClass)
       const instance = new UnsafeMyClass()
       const result = instance.doSomething()
 
@@ -204,7 +203,7 @@ describe(makeUnsafe.name, () => {
   })
 
   describe("MemoryFileSystem integration", () => {
-    const UnsafeMemoryFileSystem = makeUnsafe(MemoryFileSystem)
+    const UnsafeMemoryFileSystem = makeUnsafeClass(MemoryFileSystem)
 
     it("can be instantiated with genesis argument", () => {
       const fs = new UnsafeMemoryFileSystem({
@@ -265,7 +264,7 @@ describe(asSafe.name, () => {
   })
 
   it("converts unsafe instance to safe API", async () => {
-    const UnsafeFs = makeUnsafe(MemoryFileSystem)
+    const UnsafeFs = makeUnsafeClass(MemoryFileSystem)
     const unsafeFs = new UnsafeFs({ "test.txt": "content" })
 
     const safeFs = asSafe(unsafeFs)
@@ -276,7 +275,7 @@ describe(asSafe.name, () => {
   })
 
   it("safe wrapper returns Result on error", async () => {
-    const UnsafeFs = makeUnsafe(MemoryFileSystem)
+    const UnsafeFs = makeUnsafeClass(MemoryFileSystem)
     const unsafeFs = new UnsafeFs()
 
     const safeFs = asSafe(unsafeFs)
@@ -299,7 +298,7 @@ describe(asSafe.name, () => {
       }
     }
 
-    const UnsafeStatefulClass = makeUnsafe(StatefulClass)
+    const UnsafeStatefulClass = makeUnsafeClass(StatefulClass)
     const unsafeClass = new UnsafeStatefulClass()
     const safeClass = asSafe(unsafeClass)
 
@@ -329,7 +328,7 @@ describe(asSafe.name, () => {
       }
 
       // Create unsafe version
-      const UnsafeChild = makeUnsafe(ChildService)
+      const UnsafeChild = makeUnsafeClass(ChildService)
       const unsafeInstance = new UnsafeChild()
 
       // Verify both methods work on unsafe instance (auto-unwrapped)
@@ -365,7 +364,7 @@ describe(asSafe.name, () => {
         }
       }
 
-      const UnsafeAsyncChild = makeUnsafe(AsyncChildService)
+      const UnsafeAsyncChild = makeUnsafeClass(AsyncChildService)
       const unsafeInstance = new UnsafeAsyncChild()
 
       // Unsafe: auto-unwraps to Promise<string>

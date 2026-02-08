@@ -87,7 +87,9 @@ function unwrapIfResult(value: unknown): unknown {
  * // After: fs.readFile(path) returns Promise<string> (throws on error)
  * ```
  */
-export function makeUnsafe<C extends new (...args: any[]) => any>(BaseClass: C): UnsafeClass<C> {
+export function makeUnsafeClass<C extends new (...args: any[]) => any>(
+  BaseClass: C,
+): UnsafeClass<C> {
   return class extends BaseClass {
     [SAFE_PROTO] = BaseClass.prototype
 
