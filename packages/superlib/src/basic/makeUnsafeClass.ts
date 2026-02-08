@@ -90,31 +90,28 @@ function unwrapIfResult(value: unknown): unknown {
 export function makeUnsafeClass<C extends new (...args: any[]) => any>(
   BaseClass: C,
 ): UnsafeClass<C> {
-  return class extends BaseClass {
-    [SAFE_PROTO] = BaseClass.prototype
-
+  class UnsafeWrapper extends (BaseClass as any) {
     constructor(...args: any[]) {
       super(...args)
 
-      // Get all method names from prototype chain
-      let proto: object | null = Object.getPrototypeOf(this)
-      while (proto && proto !== Object.prototype) {
-        for (const key of Object.getOwnPropertyNames(proto)) {
-          if (key === "constructor") continue
-
-          const descriptor = Object.getOwnPropertyDescriptor(proto, key)
-          if (descriptor && typeof descriptor.value === "function") {
-            const originalMethod = descriptor.value
-            ;(this as any)[key] = (...methodArgs: unknown[]) => {
-              const result = originalMethod.apply(this, methodArgs)
-              return unwrapIfResult(result)
-            }
+      return new Proxy(this, {
+        get(target, prop, _receiver) {
+          if (prop === SAFE_PROTO) {
+            return target
           }
-        }
-        proto = Object.getPrototypeOf(proto)
-      }
+
+          const value = Reflect.get(target, prop, target)
+          if (typeof value === "function") {
+            return (...fnArgs: unknown[]) =>
+              unwrapIfResult((value as Function).apply(target, fnArgs))
+          }
+          return value
+        },
+      })
     }
-  } as unknown as UnsafeClass<C>
+  }
+
+  return UnsafeWrapper as unknown as UnsafeClass<C>
 }
 
 /**
@@ -131,37 +128,9 @@ export function makeUnsafeClass<C extends new (...args: any[]) => any>(
  * ```
  */
 export function asSafe<T extends object>(instance: T | Unsafe<T>): T {
-  const proto = (instance as any)[SAFE_PROTO]
-  if (!proto) return instance as T
-
-  // Proxy that resolves method lookups from the original prototype chain
-  // so internal this.method() calls invoke safe (Result-returning) methods,
-  // while state (fields, symbols) falls through to the actual instance.
-  const safeThis = new Proxy(instance, {
-    get(target, prop, receiver) {
-      const protoValue = proto[prop]
-      if (typeof protoValue === "function") {
-        return protoValue.bind(receiver)
-      }
-      return Reflect.get(target, prop, receiver)
-    },
-  })
-
-  const safeWrapper = Object.create(null)
-
-  let current: object | null = proto
-  while (current && current !== Object.prototype) {
-    for (const key of Object.getOwnPropertyNames(current)) {
-      if (key === "constructor") continue
-      if (key in safeWrapper) continue
-
-      const method = (current as any)[key]
-      if (typeof method === "function") {
-        safeWrapper[key] = (...args: unknown[]) => method.call(safeThis, ...args)
-      }
-    }
-    current = Object.getPrototypeOf(current)
+  const target = (instance as any)[SAFE_PROTO]
+  if (!target) {
+    return instance as T
   }
-
-  return safeWrapper as T
+  return target as T
 }

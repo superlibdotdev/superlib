@@ -32,6 +32,10 @@ class MyCounter {
     // @note: this is written in such way to use the fact that result should always return Result. Even in unsafe version
     return result.andThen((r) => Ok(r + 1))
   }
+
+  incrementTwice(): Result<number, TaggedError> {
+    return this.increment().andThen(() => this.increment())
+  }
 }
 
 const UnsafeMyCounter = makeUnsafeClass(MyCounter)
@@ -66,6 +70,14 @@ describe(makeUnsafeClass.name, () => {
       const result = instance.increment()
 
       expect(result).toBe(43)
+    })
+
+    it("unwraps Ok results with internal calls modifying state", () => {
+      const instance = new UnsafeMyCounter(42)
+
+      const result = instance.incrementTwice()
+
+      expect(result).toBe(44)
     })
   })
 
@@ -346,13 +358,22 @@ describe(asSafe.name, () => {
   })
 
   describe("with internal method calls", () => {
-    it("should work", () => {
+    it("works with methods calling internal methods", () => {
       const unsafeInstance = new UnsafeMyCounter(0)
       const safeInstance = asSafe(unsafeInstance)
 
       const result = safeInstance.increment()
 
       expect(result.unwrap()).toBe(1)
+    })
+
+    it("should work with internal methods modifying state", () => {
+      const unsafeInstance = new UnsafeMyCounter(0)
+      const safeInstance = asSafe(unsafeInstance)
+
+      const result = safeInstance.incrementTwice()
+
+      expect(result.unwrap()).toBe(2)
     })
   })
 })
