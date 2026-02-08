@@ -6,77 +6,72 @@ import { asSafe, makeUnsafeClass } from "./makeUnsafeClass"
 import { Err, Ok, type Result, type TaggedError } from "./Result"
 import { ResultAsync } from "./ResultAsync"
 
+class MyCounter {
+  constructor(private _counter: number = 0) {}
+
+  getCounter(): Result<number, TaggedError> {
+    return Ok(this._counter)
+  }
+
+  getCounterThrows(): Result<number, { type: "boom" }> {
+    return Err({ type: "boom" })
+  }
+
+  async getCounterAsync(): Promise<Result<number, TaggedError>> {
+    return Ok(this._counter)
+  }
+
+  async getCounterAsyncThrows(): Promise<Result<number, { type: "boom" }>> {
+    return Err({ type: "boom" })
+  }
+
+  increment(): Result<number, TaggedError> {
+    this._counter += 1
+
+    return this.getCounter()
+  }
+}
+
+const UnsafeMyCounter = makeUnsafeClass(MyCounter)
+
 describe(makeUnsafeClass.name, () => {
   describe("class wrapping", () => {
     it("returns a constructor that can be instantiated", () => {
-      class MyClass {
-        getValue(): Result<number, { type: "error" }> {
-          return Ok(42)
-        }
-      }
+      const instance = new UnsafeMyCounter()
 
-      const UnsafeMyClass = makeUnsafeClass(MyClass)
-      const instance = new UnsafeMyClass()
-
-      expect(instance).toBeInstanceOf(MyClass)
+      expect(instance).toBeInstanceOf(MyCounter)
     })
   })
 
   describe("synchronous Result methods", () => {
     it("unwraps Ok results", () => {
-      class MyClass {
-        getValue(): Result<number, { type: "error" }> {
-          return Ok(42)
-        }
-      }
+      const instance = new UnsafeMyCounter(42)
 
-      const UnsafeMyClass = makeUnsafeClass(MyClass)
-      const instance = new UnsafeMyClass()
-      const result = instance.getValue()
+      const result = instance.getCounter()
 
       expect(result).toBe(42)
     })
 
     it("throws on Err results", () => {
-      class MyClass {
-        getValue(): Result<number, { type: "boom" }> {
-          return Err({ type: "boom" })
-        }
-      }
+      const instance = new UnsafeMyCounter()
 
-      const UnsafeMyClass = makeUnsafeClass(MyClass)
-      const instance = new UnsafeMyClass()
-
-      expect(() => instance.getValue()).toThrow()
+      expect(() => instance.getCounterThrows()).toThrow()
     })
   })
 
   describe("async Result methods", () => {
     it("unwraps Promise<Ok>", async () => {
-      class MyClass {
-        async getValue(): Promise<Result<string, { type: "error" }>> {
-          return Ok("hello")
-        }
-      }
+      const instance = new UnsafeMyCounter(42)
 
-      const UnsafeMyClass = makeUnsafeClass(MyClass)
-      const instance = new UnsafeMyClass()
-      const result = await instance.getValue()
+      const result = await instance.getCounterAsync()
 
-      expect(result).toBe("hello")
+      expect(result).toBe(42)
     })
 
     it("rejects Promise on Err", async () => {
-      class MyClass {
-        async getValue(): Promise<Result<string, { type: "boom" }>> {
-          return Err({ type: "boom" })
-        }
-      }
+      const instance = new UnsafeMyCounter()
 
-      const UnsafeMyClass = makeUnsafeClass(MyClass)
-      const instance = new UnsafeMyClass()
-
-      expect(instance.getValue()).rejects.toEqual({ type: "boom" })
+      expect(instance.getCounterAsyncThrows()).rejects.toEqual({ type: "boom" })
     })
   })
 
@@ -145,38 +140,19 @@ describe(makeUnsafeClass.name, () => {
 
   describe("constructor arguments", () => {
     it("passes constructor arguments to base class", () => {
-      class MyClass {
-        constructor(
-          private readonly multiplier: number,
-          private readonly prefix: string,
-        ) {}
+      const instance = new UnsafeMyCounter(42)
 
-        calculate(n: number): Result<string, { type: "error" }> {
-          return Ok(`${this.prefix}${n * this.multiplier}`)
-        }
-      }
+      const result = instance.getCounter()
 
-      const UnsafeMyClass = makeUnsafeClass(MyClass)
-      const instance = new UnsafeMyClass(10, "Result: ")
-      const result = instance.calculate(5)
-
-      expect(result).toBe("Result: 50")
+      expect(result).toBe(42)
     })
   })
 
   describe("method binding", () => {
     it("preserves this context for class methods", () => {
-      class Counter {
-        private value = 10
+      const instance = new UnsafeMyCounter(10)
 
-        getValue(): Result<number, { type: "error" }> {
-          return Ok(this.value)
-        }
-      }
-
-      const UnsafeCounter = makeUnsafeClass(Counter)
-      const instance = new UnsafeCounter()
-      const result = instance.getValue()
+      const result = instance.getCounter()
 
       expect(result).toBe(10)
     })
@@ -285,79 +261,56 @@ describe(asSafe.name, () => {
   })
 
   it("preserves state between safe and unsafe wrappers", () => {
-    class StatefulClass {
-      constructor(private _data = "default") {}
+    const unsafeCounter = new UnsafeMyCounter(0)
+    const safeCounter = asSafe(unsafeCounter)
 
-      setData(value: string): Result<string, TaggedError> {
-        this._data = value
-        return Ok("success")
-      }
+    unsafeCounter.increment()
+    expect(unsafeCounter.getCounter()).toBe(1)
+    expect(safeCounter.getCounter().unwrap()).toBe(1)
 
-      getData(): string {
-        return this._data
-      }
-    }
-
-    const UnsafeStatefulClass = makeUnsafeClass(StatefulClass)
-    const unsafeClass = new UnsafeStatefulClass()
-    const safeClass = asSafe(unsafeClass)
-
-    unsafeClass.setData("first write")
-    expect(unsafeClass.getData()).toEqual("first write")
-    expect(safeClass.getData()).toEqual("first write")
-
-    safeClass.setData("second write")
-    expect(unsafeClass.getData()).toEqual("second write")
-    expect(safeClass.getData()).toEqual("second write")
+    safeCounter.increment()
+    expect(unsafeCounter.getCounter()).toBe(2)
+    expect(safeCounter.getCounter().unwrap()).toBe(2)
   })
 
   describe("with inherited methods", () => {
     it("should preserve methods from parent classes", () => {
-      // Base class with a method returning Result
       class BaseService {
         getData(): Result<string, TaggedError> {
           return Ok("base data")
         }
       }
 
-      // Child class extending base with its own method
       class ChildService extends BaseService {
         getChildData(): Result<string, TaggedError> {
           return Ok("child data")
         }
       }
 
-      // Create unsafe version
       const UnsafeChild = makeUnsafeClass(ChildService)
       const unsafeInstance = new UnsafeChild()
 
-      // Verify both methods work on unsafe instance (auto-unwrapped)
       expect(unsafeInstance.getData()).toBe("base data")
       expect(unsafeInstance.getChildData()).toBe("child data")
 
-      // Convert back to safe API
       const safeInstance = asSafe(unsafeInstance)
 
-      // Verify inherited method from parent is preserved
       const baseResult = safeInstance.getData()
       expect(baseResult.isOk()).toBe(true)
       expect(baseResult.unwrap()).toBe("base data")
 
-      // Verify child method is also preserved
       const childResult = safeInstance.getChildData()
       expect(childResult.isOk()).toBe(true)
       expect(childResult.unwrap()).toBe("child data")
     })
 
     it("should preserve async methods from parent classes", async () => {
-      // Base class with async method
       class AsyncBaseService {
         async fetchData(): Promise<Result<string, TaggedError>> {
           return Ok("async base data")
         }
       }
 
-      // Child class with its own async method
       class AsyncChildService extends AsyncBaseService {
         async fetchChildData(): Promise<Result<string, TaggedError>> {
           return Ok("async child data")
@@ -367,11 +320,9 @@ describe(asSafe.name, () => {
       const UnsafeAsyncChild = makeUnsafeClass(AsyncChildService)
       const unsafeInstance = new UnsafeAsyncChild()
 
-      // Unsafe: auto-unwraps to Promise<string>
       expect(await unsafeInstance.fetchData()).toBe("async base data")
       expect(await unsafeInstance.fetchChildData()).toBe("async child data")
 
-      // Safe: returns Promise<Result<string, E>>
       const safeInstance = asSafe(unsafeInstance)
 
       const baseResult = await safeInstance.fetchData()
@@ -381,6 +332,17 @@ describe(asSafe.name, () => {
       const childResult = await safeInstance.fetchChildData()
       expect(childResult.isOk()).toBe(true)
       expect(childResult.unwrap()).toBe("async child data")
+    })
+  })
+
+  describe("with internal method calls", () => {
+    it("should work", () => {
+      const unsafeInstance = new UnsafeMyCounter(0)
+      const safeInstance = asSafe(unsafeInstance)
+
+      const result = safeInstance.increment()
+
+      expect(result.unwrap()).toBe(1)
     })
   })
 })

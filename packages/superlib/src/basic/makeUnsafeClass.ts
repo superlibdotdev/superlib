@@ -81,7 +81,7 @@ function unwrapIfResult(value: unknown): unknown {
  *
  * @example
  * ```typescript
- * const UnsafeMemoryFs = makeUnsafe(MemoryFileSystem)
+ * const UnsafeMemoryFs = makeUnsafeClass(MemoryFileSystem)
  * const fs = new UnsafeMemoryFs()
  * // Before: fs.readFile(path) returns Promise<Result<string, FileAccessError>>
  * // After: fs.readFile(path) returns Promise<string> (throws on error)
@@ -123,7 +123,7 @@ export function makeUnsafeClass<C extends new (...args: any[]) => any>(
  *
  * @example
  * ```typescript
- * const UnsafeFs = makeUnsafe(MemoryFileSystem)
+ * const UnsafeFs = makeUnsafeClass(MemoryFileSystem)
  * const unsafeFs = new UnsafeFs()
  *
  * const safeFs = asSafe(unsafeFs)
@@ -133,6 +133,19 @@ export function makeUnsafeClass<C extends new (...args: any[]) => any>(
 export function asSafe<T extends object>(instance: T | Unsafe<T>): T {
   const proto = (instance as any)[SAFE_PROTO]
   if (!proto) return instance as T
+
+  // Proxy that resolves method lookups from the original prototype chain
+  // so internal this.method() calls invoke safe (Result-returning) methods,
+  // while state (fields, symbols) falls through to the actual instance.
+  const safeThis = new Proxy(instance, {
+    get(target, prop, receiver) {
+      const protoValue = proto[prop]
+      if (typeof protoValue === "function") {
+        return protoValue.bind(receiver)
+      }
+      return Reflect.get(target, prop, receiver)
+    },
+  })
 
   const safeWrapper = Object.create(null)
 
@@ -144,7 +157,7 @@ export function asSafe<T extends object>(instance: T | Unsafe<T>): T {
 
       const method = (current as any)[key]
       if (typeof method === "function") {
-        safeWrapper[key] = (...args: unknown[]) => method.call(instance, ...args)
+        safeWrapper[key] = (...args: unknown[]) => method.call(safeThis, ...args)
       }
     }
     current = Object.getPrototypeOf(current)
