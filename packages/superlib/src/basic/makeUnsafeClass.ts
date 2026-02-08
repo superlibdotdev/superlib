@@ -101,6 +101,10 @@ export function makeUnsafeClass<C extends new (...args: any[]) => any>(
           }
 
           const value = Reflect.get(target, prop, target)
+          if (prop === "constructor") {
+            return BaseClass
+          }
+
           if (typeof value === "function") {
             return (...fnArgs: unknown[]) =>
               unwrapIfResult((value as Function).apply(target, fnArgs))

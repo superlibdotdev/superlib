@@ -47,6 +47,12 @@ describe(makeUnsafeClass.name, () => {
 
       expect(instance).toBeInstanceOf(MyCounter)
     })
+
+    it("preserves constructor identity", () => {
+      const instance = new UnsafeMyCounter()
+
+      expect(instance.constructor).toBe(MyCounter)
+    })
   })
 
   describe("synchronous Result methods", () => {
