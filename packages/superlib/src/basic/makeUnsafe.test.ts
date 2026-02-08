@@ -1,9 +1,10 @@
+import { unsafe } from "bun"
 import { describe, expect, it } from "bun:test"
 
 import { AbsolutePath } from "../platform/filesystem/AbsolutePath"
 import { MemoryFileSystem } from "../platform/filesystem/MemoryFileSystem"
 import { asSafe, makeUnsafe } from "./makeUnsafe"
-import { Err, Ok, type Result } from "./Result"
+import { Err, Ok, type Result, type TaggedError } from "./Result"
 import { ResultAsync } from "./ResultAsync"
 
 describe(makeUnsafe.name, () => {
@@ -282,5 +283,105 @@ describe(asSafe.name, () => {
     const result = await safeFs.readFile(AbsolutePath("/missing.txt"))
 
     expect(result.isErr()).toBe(true)
+  })
+
+  it("preserves state between safe and unsafe wrappers", () => {
+    class StatefulClass {
+      constructor(private _data = "default") {}
+
+      setData(value: string): Result<string, TaggedError> {
+        this._data = value
+        return Ok("success")
+      }
+
+      getData(): string {
+        return this._data
+      }
+    }
+
+    const UnsafeStatefulClass = makeUnsafe(StatefulClass)
+    const unsafeClass = new UnsafeStatefulClass()
+    const safeClass = asSafe(unsafeClass)
+
+    unsafeClass.setData("first write")
+    expect(unsafeClass.getData()).toEqual("first write")
+    expect(safeClass.getData()).toEqual("first write")
+
+    safeClass.setData("second write")
+    expect(unsafeClass.getData()).toEqual("second write")
+    expect(safeClass.getData()).toEqual("second write")
+  })
+
+  describe("with inherited methods", () => {
+    it("should preserve methods from parent classes", () => {
+      // Base class with a method returning Result
+      class BaseService {
+        getData(): Result<string, TaggedError> {
+          return Ok("base data")
+        }
+      }
+
+      // Child class extending base with its own method
+      class ChildService extends BaseService {
+        getChildData(): Result<string, TaggedError> {
+          return Ok("child data")
+        }
+      }
+
+      // Create unsafe version
+      const UnsafeChild = makeUnsafe(ChildService)
+      const unsafeInstance = new UnsafeChild()
+
+      // Verify both methods work on unsafe instance (auto-unwrapped)
+      expect(unsafeInstance.getData()).toBe("base data")
+      expect(unsafeInstance.getChildData()).toBe("child data")
+
+      // Convert back to safe API
+      const safeInstance = asSafe(unsafeInstance)
+
+      // Verify inherited method from parent is preserved
+      const baseResult = safeInstance.getData()
+      expect(baseResult.isOk()).toBe(true)
+      expect(baseResult.unwrap()).toBe("base data")
+
+      // Verify child method is also preserved
+      const childResult = safeInstance.getChildData()
+      expect(childResult.isOk()).toBe(true)
+      expect(childResult.unwrap()).toBe("child data")
+    })
+
+    it("should preserve async methods from parent classes", async () => {
+      // Base class with async method
+      class AsyncBaseService {
+        async fetchData(): Promise<Result<string, TaggedError>> {
+          return Ok("async base data")
+        }
+      }
+
+      // Child class with its own async method
+      class AsyncChildService extends AsyncBaseService {
+        async fetchChildData(): Promise<Result<string, TaggedError>> {
+          return Ok("async child data")
+        }
+      }
+
+      const UnsafeAsyncChild = makeUnsafe(AsyncChildService)
+      const unsafeInstance = new UnsafeAsyncChild()
+
+      // Unsafe: auto-unwraps to Promise<string>
+      expect(await unsafeInstance.fetchData()).toBe("async base data")
+      expect(await unsafeInstance.fetchChildData()).toBe("async child data")
+
+      // Safe: returns Promise<Result<string, E>>
+      const safeInstance = asSafe(unsafeInstance)
+
+      const baseResult = await safeInstance.fetchData()
+      expect(baseResult.isOk()).toBe(true)
+      expect(baseResult.unwrap()).toBe("async base data")
+
+      const childResult = await safeInstance.fetchChildData()
+      expect(childResult.isOk()).toBe(true)
+      expect(childResult.unwrap()).toBe("async child data")
+    })
   })
 })

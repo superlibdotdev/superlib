@@ -134,13 +134,18 @@ export function asSafe<T extends object>(instance: T | Unsafe<T>): T {
 
   const safeWrapper = Object.create(null)
 
-  for (const key of Object.getOwnPropertyNames(proto)) {
-    if (key === "constructor") continue
+  let current: object | null = proto
+  while (current && current !== Object.prototype) {
+    for (const key of Object.getOwnPropertyNames(current)) {
+      if (key === "constructor") continue
+      if (key in safeWrapper) continue
 
-    const method = proto[key]
-    if (typeof method === "function") {
-      safeWrapper[key] = (...args: unknown[]) => method.call(instance, ...args)
+      const method = (current as any)[key]
+      if (typeof method === "function") {
+        safeWrapper[key] = (...args: unknown[]) => method.call(instance, ...args)
+      }
     }
+    current = Object.getPrototypeOf(current)
   }
 
   return safeWrapper as T
