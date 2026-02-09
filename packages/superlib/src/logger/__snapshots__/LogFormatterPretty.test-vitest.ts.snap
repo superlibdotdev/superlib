@@ -1,14 +1,14 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`LogFormatterPretty > with colors > formats a basic info entry 1`] = `"[90m12:30:45.123Z[0m [1m[32mINFO[0m[0m"`;
+exports[`LogFormatterPretty > with colors > formats a basic info entry 1`] = `"[90m12:30:45.123Z[39m [1m[32mINFO[39m[22m"`;
 
-exports[`LogFormatterPretty > with colors > formats debug level 1`] = `"[90m12:30:45.123Z[0m [1m[35mDEBUG[0m[0m details"`;
+exports[`LogFormatterPretty > with colors > formats debug level 1`] = `"[90m12:30:45.123Z[39m [1m[35mDEBUG[39m[22m details"`;
 
-exports[`LogFormatterPretty > with colors > formats error level 1`] = `"[90m12:30:45.123Z[0m [1m[31mERROR[0m[0m fail"`;
+exports[`LogFormatterPretty > with colors > formats error level 1`] = `"[90m12:30:45.123Z[39m [1m[31mERROR[39m[22m fail"`;
 
-exports[`LogFormatterPretty > with colors > formats warn level 1`] = `"[90m12:30:45.123Z[0m [1m[33mWARN[0m[0m careful"`;
+exports[`LogFormatterPretty > with colors > formats warn level 1`] = `"[90m12:30:45.123Z[39m [1m[33mWARN[39m[22m careful"`;
 
-exports[`LogFormatterPretty > with colors > formats with service and message 1`] = `"[90m12:30:45.123Z[0m [1m[32mINFO[0m[0m [90m[[0m [33mMyService[0m [90m][0m hello world"`;
+exports[`LogFormatterPretty > with colors > formats with service and message 1`] = `"[90m12:30:45.123Z[39m [1m[32mINFO[39m[22m [90m[[39m [33mMyService[39m [90m][39m hello world"`;
 
 exports[`LogFormatterPretty > without colors > formats a basic info entry 1`] = `"12:30:45.123Z INFO"`;
 
