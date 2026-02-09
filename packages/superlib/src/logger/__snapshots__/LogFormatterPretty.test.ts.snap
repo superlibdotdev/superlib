@@ -33,12 +33,12 @@ exports[`LogFormatterPretty without colors formats with resolved error 1`] = `
 }"
 `;
 
-exports[`LogFormatterPretty with colors formats a basic info entry 1`] = `"\x1B[90m12:30:45.123Z\x1B[0m \x1B[1m\x1B[32mINFO\x1B[0m\x1B[0m"`;
+exports[`LogFormatterPretty with colors formats a basic info entry 1`] = `"\x1B[90m12:30:45.123Z\x1B[39m \x1B[1m\x1B[32mINFO\x1B[39m\x1B[22m"`;
 
-exports[`LogFormatterPretty with colors formats with service and message 1`] = `"\x1B[90m12:30:45.123Z\x1B[0m \x1B[1m\x1B[32mINFO\x1B[0m\x1B[0m \x1B[90m[\x1B[0m \x1B[33mMyService\x1B[0m \x1B[90m]\x1B[0m hello world"`;
+exports[`LogFormatterPretty with colors formats with service and message 1`] = `"\x1B[90m12:30:45.123Z\x1B[39m \x1B[1m\x1B[32mINFO\x1B[39m\x1B[22m \x1B[90m[\x1B[39m \x1B[33mMyService\x1B[39m \x1B[90m]\x1B[39m hello world"`;
 
-exports[`LogFormatterPretty with colors formats error level 1`] = `"\x1B[90m12:30:45.123Z\x1B[0m \x1B[1m\x1B[31mERROR\x1B[0m\x1B[0m fail"`;
+exports[`LogFormatterPretty with colors formats error level 1`] = `"\x1B[90m12:30:45.123Z\x1B[39m \x1B[1m\x1B[31mERROR\x1B[39m\x1B[22m fail"`;
 
-exports[`LogFormatterPretty with colors formats warn level 1`] = `"\x1B[90m12:30:45.123Z\x1B[0m \x1B[1m\x1B[33mWARN\x1B[0m\x1B[0m careful"`;
+exports[`LogFormatterPretty with colors formats warn level 1`] = `"\x1B[90m12:30:45.123Z\x1B[39m \x1B[1m\x1B[33mWARN\x1B[39m\x1B[22m careful"`;
 
-exports[`LogFormatterPretty with colors formats debug level 1`] = `"\x1B[90m12:30:45.123Z\x1B[0m \x1B[1m\x1B[35mDEBUG\x1B[0m\x1B[0m details"`;
+exports[`LogFormatterPretty with colors formats debug level 1`] = `"\x1B[90m12:30:45.123Z\x1B[39m \x1B[1m\x1B[35mDEBUG\x1B[39m\x1B[22m details"`;
