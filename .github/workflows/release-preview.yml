@@ -1,19 +1,20 @@
-name: Nightly Release
+name: Preview Release
 
 on:
   push:
-    branches: [main]
+    branches-ignore: [main]
 
 permissions:
-  id-token: write # Required for OIDC
+  id-token: write
   contents: read
 
 concurrency:
-  group: nightly-release
-  cancel-in-progress: false
+  group: preview-release-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  release-nightly:
+  release-preview:
+    if: contains(github.event.head_commit.message, '[preview]')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,20 +31,20 @@ jobs:
       - run: bun run lint
       - run: bun test
 
-      - name: Set nightly version
+      - name: Set preview version
         id: version
         working-directory: packages/superlib
         run: |
           BASE_VERSION=$(jq -r '.version' package.json)
           DATE=$(date +%Y%m%d)
           SHORT_SHA=$(git rev-parse --short=7 HEAD)
-          NIGHTLY_VERSION="${BASE_VERSION}-nightly.${DATE}.${SHORT_SHA}"
-          echo "version=${NIGHTLY_VERSION}" >> $GITHUB_OUTPUT
+          PREVIEW_VERSION="${BASE_VERSION}-preview.${DATE}.${SHORT_SHA}"
+          echo "version=${PREVIEW_VERSION}" >> $GITHUB_OUTPUT
 
-          jq --arg v "$NIGHTLY_VERSION" '.version = $v' package.json > package.json.tmp
+          jq --arg v "$PREVIEW_VERSION" '.version = $v' package.json > package.json.tmp
           mv package.json.tmp package.json
 
-          echo "Publishing version: $NIGHTLY_VERSION"
+          echo "Publishing version: $PREVIEW_VERSION"
 
       - name: Build package
         working-directory: packages/superlib
@@ -51,19 +52,19 @@ jobs:
 
       - name: Publish to npm
         working-directory: packages/superlib
-        run: npm publish --tag nightly --access public --provenance
+        run: npm publish --tag preview --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create summary
         run: |
           cat >> $GITHUB_STEP_SUMMARY <<EOF
-          ## Nightly Release Published
+          ## Preview Release Published
 
           **Version:** \`${{ steps.version.outputs.version }}\`
 
           Install with:
           \`\`\`bash
-          npm install superlib@nightly
+          npm install superlib@preview
           \`\`\`
           EOF
