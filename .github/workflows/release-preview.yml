@@ -1,0 +1,70 @@
+name: Preview Release
+
+on:
+  push:
+    branches-ignore: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: preview-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    if: contains(github.event.head_commit.message, '[preview]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          registry-url: "https://registry.npmjs.org"
+
+      - run: bun install --frozen-lockfile
+
+      - run: bun run fmt
+      - run: bun run lint
+      - run: bun test
+
+      - name: Set preview version
+        id: version
+        working-directory: packages/superlib
+        run: |
+          BASE_VERSION=$(jq -r '.version' package.json)
+          DATE=$(date +%Y%m%d)
+          SHORT_SHA=$(git rev-parse --short=7 HEAD)
+          PREVIEW_VERSION="${BASE_VERSION}-preview.${DATE}.${SHORT_SHA}"
+          echo "version=${PREVIEW_VERSION}" >> $GITHUB_OUTPUT
+
+          jq --arg v "$PREVIEW_VERSION" '.version = $v' package.json > package.json.tmp
+          mv package.json.tmp package.json
+
+          echo "Publishing version: $PREVIEW_VERSION"
+
+      - name: Build package
+        working-directory: packages/superlib
+        run: bun run build
+
+      - name: Publish to npm
+        working-directory: packages/superlib
+        run: npm publish --tag preview --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create summary
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ## Preview Release Published
+
+          **Version:** \`${{ steps.version.outputs.version }}\`
+
+          Install with:
+          \`\`\`bash
+          npm install superlib@preview
+          \`\`\`
+          EOF
