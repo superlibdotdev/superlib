@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, jest, spyOn, vi } from "bu
 
 import { Err, Ok } from "../../basic"
 import { sleep, type DurationLike } from "../../time"
-import { makeSafeFetch, type SafeFetchOptions } from "./makeSafeFetch"
+import { makeSafeFetch, type UserSafeFetchOptions } from "./makeSafeFetch"
 
 describe(makeSafeFetch.name, () => {
   let fetchSpy: ReturnType<typeof spyOn<typeof globalThis, "fetch">>
@@ -22,7 +22,7 @@ describe(makeSafeFetch.name, () => {
   })
 
   describe("no retries", () => {
-    const options: SafeFetchOptions = {
+    const options: UserSafeFetchOptions = {
       retry: undefined,
     }
 
@@ -61,7 +61,7 @@ describe(makeSafeFetch.name, () => {
         times: 3,
         delay: (): DurationLike => ({ milliseconds: 100 }),
       },
-    } satisfies SafeFetchOptions
+    } satisfies UserSafeFetchOptions
 
     it("retries http errors until success", async () => {
       const successResponse = new Response("ok", { status: 200 })
@@ -112,7 +112,8 @@ describe(makeSafeFetch.name, () => {
       fetchSpy.mockResolvedValue(response)
 
       const result = makeSafeFetch({
-        retry: { ...options.retry, untilStatus: (status) => status === 200 },
+        retry: options.retry,
+        retryUntilStatus: (status) => status === 200,
       })("https://example.com")
       await flushMicrotasks()
       expect(fetchSpy).toHaveBeenCalledTimes(1)
@@ -142,6 +143,7 @@ describe(makeSafeFetch.name, () => {
 
       const result = makeSafeFetch({
         timeout: { seconds: 1 },
+        retry: undefined,
       })("https://example.com")
 
       await flushMicrotasks()

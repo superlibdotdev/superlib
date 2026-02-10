@@ -2,3 +2,5 @@
 export type PublicInterface<T> = { [K in keyof T]: T[K] }
 
 export type Primitive = string | number | boolean | null | undefined | bigint
+
+export * from "./data"

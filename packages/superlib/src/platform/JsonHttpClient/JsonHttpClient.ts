@@ -2,29 +2,15 @@ import type { StandardSchemaV1 } from "../../schema/StandardSchema"
 
 import { ResultAsync, type Result } from "../../basic"
 import { validateSchema, type ValidationError } from "../../schema/validateSchema"
-import {
-  makeSafeFetch,
-  type SafeFetch,
-  type SafeFetchError,
-  type SafeFetchOptions,
-} from "../safeFetch"
+import { makeSafeFetch, type SafeFetch, type SafeFetchError } from "../safeFetch"
 
 export type JsonHttpClientError =
   | SafeFetchError
   | { type: "jsonHttpClient/json-parse"; cause: unknown }
   | ValidationError
 
-const defaultSafeFetchOptions: SafeFetchOptions = {
-  retry: {
-    times: 3,
-    delay: { milliseconds: 200 }, // @note: jittered by default
-    untilStatus: (status) => status >= 200 && status < 300,
-  },
-  timeout: { seconds: 5 },
-}
-
 export class JsonHttpClient {
-  constructor(private readonly safeFetch: SafeFetch = makeSafeFetch(defaultSafeFetchOptions)) {}
+  constructor(private readonly safeFetch: SafeFetch = makeSafeFetch()) {}
 
   private async request<T>(
     url: string,
