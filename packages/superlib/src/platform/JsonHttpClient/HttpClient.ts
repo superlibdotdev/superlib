@@ -147,11 +147,9 @@ export class HttpClient {
           }
           return Ok(response)
         })
-        .andThen((response) =>
-          ResultAsync.try(
-            () => (output === "text" ? response.text() : response.json()),
-            (cause): HttpClientError => ({ type: "httpClient/parse", cause }),
-          ),
+        .mapTry(
+          (response) => (output === "text" ? response.text() : response.json()),
+          (cause): HttpClientError => ({ type: "httpClient/parse", cause }),
         )
         .toPromise()
     }

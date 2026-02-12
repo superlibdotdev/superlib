@@ -6,16 +6,28 @@ export abstract class Result<V, E extends TaggedError> {
   abstract isOk(): this is OkResult<V, E>
   abstract isErr(): this is ErrResult<V, E>
   abstract unwrap(): V
+
   abstract andThen<V2, E2 extends TaggedError>(
     mapper: (value: V) => Result<V2, E2>,
   ): Result<V2, E | E2>
+  abstract map<V2>(mapper: (value: V) => V2): Result<V2, E>
+  abstract mapTry<V2, E2 extends TaggedError>(
+    mapper: (value: V) => V2,
+    catchFn: (e: unknown) => Result<V2, E2> | E2,
+  ): Result<V2, E | E2>
 
-  // @todo: catchFn should be able to return Result<V,E> to turn exception into Ok
-  static try<V, E extends TaggedError>(fn: () => V, catchFn: (e: unknown) => E): Result<V, E> {
+  static try<V, E extends TaggedError>(
+    fn: () => V,
+    catchFn: (e: unknown) => E | Result<V, E>,
+  ): Result<V, E> {
     try {
       return Ok(fn())
     } catch (e: unknown) {
-      return Err(catchFn(e))
+      const caught = catchFn(e)
+      if (caught instanceof Result) {
+        return caught
+      }
+      return Err(caught)
     }
   }
 }
@@ -42,6 +54,25 @@ export class OkResult<V, E extends TaggedError> extends Result<V, E> {
   ): Result<V2, E | E2> {
     return mapper(this.value)
   }
+
+  override map<V2>(mapper: (value: V) => V2): Result<V2, E> {
+    return Ok(mapper(this.value))
+  }
+
+  override mapTry<V2, E2 extends TaggedError>(
+    mapper: (value: V) => V2,
+    catchFn: (e: unknown) => Result<V2, E2> | E2,
+  ): Result<V2, E | E2> {
+    try {
+      return Ok(mapper(this.value))
+    } catch (e) {
+      const caught = catchFn(e)
+      if (caught instanceof Result) {
+        return caught
+      }
+      return Err(caught)
+    }
+  }
 }
 
 export class ErrResult<V, E extends TaggedError> extends Result<V, E> {
@@ -63,6 +94,17 @@ export class ErrResult<V, E extends TaggedError> extends Result<V, E> {
 
   override andThen<V2, E2 extends TaggedError>(
     _mapper: (value: V) => Result<V2, E2>,
+  ): Result<V2, E | E2> {
+    return this as any
+  }
+
+  override map<V2>(_mapper: (value: V) => V2): Result<V2, E> {
+    return this as any
+  }
+
+  override mapTry<V2, E2 extends TaggedError>(
+    _mapper: (value: V) => V2,
+    _catchFn: (e: unknown) => Result<V2, E2> | E2,
   ): Result<V2, E | E2> {
     return this as any
   }
