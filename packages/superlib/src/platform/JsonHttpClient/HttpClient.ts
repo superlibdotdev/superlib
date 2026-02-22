@@ -12,7 +12,7 @@ export type HttpClientError =
   | TimeoutErr
 
 export interface HttpClientOptions {
-  retry?: RetryOptions<Result<unknown, HttpClientError>>
+  retry?: RetryOptions<ResultAsync<unknown, HttpClientError>>
   retryUntilStatus?: (status: number) => boolean
   timeout?: DurationLike
 }
@@ -27,7 +27,7 @@ export interface HttpClientRequestOptionsWithBody extends HttpClientRequestOptio
   body?: RequestInit["body"]
 }
 
-type HttpClientResult = Result<unknown, HttpClientError>
+type HttpClientResult = ResultAsync<unknown, HttpClientError>
 
 const defaultOptions: Required<Pick<HttpClientOptions, "retryUntilStatus">> &
   Required<Pick<HttpClientOptions, "timeout" | "retry">> = {
@@ -136,7 +136,7 @@ export class HttpClient {
       body: requestOptions.body,
     }
 
-    const fetchTask: Task.Task<HttpClientResult> = async () => {
+    const fetchTask: Task.Task<HttpClientResult> = () => {
       return ResultAsync.try(
         () => fetch(requestOptions.url, requestInit),
         (error): HttpClientError => ({ type: "httpClient/network", cause: error }),
@@ -151,15 +151,12 @@ export class HttpClient {
           (response) => (output === "text" ? response.text() : response.json()),
           (cause): HttpClientError => ({ type: "httpClient/parse", cause }),
         )
-        .toPromise()
     }
 
-    return new ResultAsync(
-      Task.pipe(
-        fetchTask,
-        options.timeout && Task.timeout({ timeout: options.timeout, useResult: true }),
-        options.retry && Task.retry(options.retry),
-      ),
+    return Task.pipe(
+      fetchTask,
+      options.timeout && Task.timeout({ timeout: options.timeout }),
+      options.retry && Task.retry(options.retry),
     )
   }
 }

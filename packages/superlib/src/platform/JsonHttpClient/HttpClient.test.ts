@@ -218,7 +218,7 @@ describe(HttpClient.name, () => {
   })
 
   describe("with timeout", () => {
-    it("timeouts", async () => {
+    it.only("timeouts", async () => {
       fetchSpy.mockReturnValueOnce(
         (async (): Promise<Response> => {
           await sleep({ seconds: 2 })

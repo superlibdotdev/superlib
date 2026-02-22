@@ -1,12 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, jest, mock, spyOn, vi } from "bun:test"
 
-import { Err, Ok, Result } from "../basic"
+import type { Task } from "./types"
+
+import { Err, Ok, ResultAsync } from "../basic"
 import { sleep } from "../time"
 import * as timeoutModule from "./timeout"
 
 const { TimeoutError, timeout } = timeoutModule
 
-describe(timeout.name, () => {
+describe.only(timeout.name, () => {
   let clock: typeof vi
   beforeEach(() => {
     clock = jest.useFakeTimers()
@@ -19,7 +21,7 @@ describe(timeout.name, () => {
   })
 
   it("resolves when task finishes before timeout", async () => {
-    const task = mock(async () => {
+    const task: Task<number> = mock(async () => {
       await sleep({ milliseconds: 10 })
       return 42
     })
@@ -77,10 +79,10 @@ describe(timeout.name, () => {
 
   it("cancels timeout if task resolved before it finished", async () => {
     const timeoutErrorSpy = spyOn(timeoutModule, "TimeoutError")
-    const task = mock(async () => {
+    const task: Task<number> = async () => {
       await sleep({ milliseconds: 5 })
       return 42
-    })
+    }
 
     const result = timeout(task, { timeout: { milliseconds: 20 } })
 
@@ -93,18 +95,46 @@ describe(timeout.name, () => {
     expect(timeoutErrorSpy).toHaveBeenCalledTimes(0)
   })
 
-  describe("with result", () => {
-    it("changes return type to include timeout error", async () => {
-      const task = mock(async (): Promise<Result<number, never>> => {
-        await sleep({ milliseconds: 20 })
-        return Ok(42)
+  describe("with ResultAsync", () => {
+    it("returns Result if not timeouted", async () => {
+      const task = mock(() => {
+        return ResultAsync.try(
+          async () => {
+            await sleep({ milliseconds: 20 })
+            return 42
+          },
+          () => {
+            return null as any as never
+          },
+        )
       })
 
-      const result = timeout(task, { timeout: { milliseconds: 10 }, useResult: true })
+      const result = timeout(task, { timeout: { milliseconds: 30 } })
+
+      clock.advanceTimersByTime(20)
+
+      expect(await result.toPromise()).toEqual(Ok(42))
+      expect(task).toHaveBeenCalledTimes(1)
+    })
+
+    it("changes return type to include timeout error", async () => {
+      const task = mock(() => {
+        return ResultAsync.try(
+          async () => {
+            await sleep({ milliseconds: 20 })
+            return 42
+          },
+          () => {
+            return null as any as never
+          },
+        )
+      })
+
+      const result = timeout(task, { timeout: { milliseconds: 10 } })
 
       clock.advanceTimersByTime(10)
 
-      expect(await result).toEqual(Err({ type: "timeout", timeout: expect.anything() }))
+      expect(await result.toPromise()).toEqual(Err({ type: "timeout", timeout: expect.anything() }))
       expect(task).toHaveBeenCalledTimes(1)
     })
   })

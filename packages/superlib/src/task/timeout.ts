@@ -1,70 +1,67 @@
+
 import type { Task, TaskMapper } from "./types"
 
-import { BaseError, Err, ErrResult, Result } from "../basic"
+import { BaseError, Err, Ok, ResultAsync, type TaggedError } from "../basic"
 import { durationToMs, prettyPrintDuration, type DurationLike } from "../time"
 
 export interface TimeoutOptions {
   timeout: DurationLike
-  useResult?: boolean
 }
 
 export type TimeoutErr = { type: "timeout"; timeout: Temporal.Duration }
 
-type TimeoutAsResult<Return, Options> = Options extends { useResult: true }
-  ? Return extends Result<infer V, infer E>
-    ? Result<V, E | TimeoutErr>
-    : never
-  : Return
-// @todo: force useResult if return type is Result
+// type TimeoutAsResult<R> =
+//   R extends ResultAsync<infer V, infer E> ? ResultAsync<V, E | TimeoutErr> : R
 
-export function timeout<T, O extends TimeoutOptions>(
-  task: Task<T>,
-  options: O,
-): Promise<TimeoutAsResult<T, O>>
-export function timeout<T, O extends TimeoutOptions>(
-  options: O,
-): TaskMapper<T, TimeoutAsResult<T, O>>
-export function timeout<T, O extends TimeoutOptions>(
-  taskOrOptions: Task<T> | O,
+export type Return<T> =
+  T extends ResultAsync<infer V, infer E> ? ResultAsync<V, E | TimeoutErr> : Promise<T>
+
+export function timeout<T>(task: Task<T>, options: TimeoutOptions): Return<T>
+export function timeout<T>(options: TimeoutOptions): TaskMapper<T, T>
+export function timeout<T>(
+  taskOrOptions: Task<T> | TimeoutOptions,
   options?: TimeoutOptions,
-): Promise<TimeoutAsResult<T, O>> | TaskMapper<T, TimeoutAsResult<T, O>> {
+): Return<T> | TaskMapper<T, T> {
   if (typeof taskOrOptions === "function") {
-    return runTimeout(taskOrOptions, options as O)
+    return runTimeout(taskOrOptions, options!)
   }
 
-  return (task) => () => runTimeout(task, taskOrOptions)
+  return ((task: any) => () => runTimeout(task, taskOrOptions)) as any
 }
 
-async function runTimeout<T, O extends TimeoutOptions>(
-  task: Task<T>,
-  options: O,
-): Promise<TimeoutAsResult<T, O>> {
-  const useResult = !!options.useResult
+function runTimeout<T>(task: Task<T>, options: TimeoutOptions): Return<T> {
   const timeoutDuration = Temporal.Duration.from(options.timeout)
   const timeoutMs = durationToMs(timeoutDuration)
 
-  // note: we can't use sleep here because we want to ensure timeoutPromise cancellation
+  // note: we can't use `sleep` here because we want to ensure timeoutPromise cancellation
   let timeoutId: ReturnType<typeof setTimeout> | undefined = undefined
-  const timeoutPromise = new Promise<never>((_, reject) => {
+  const timeoutPromise = new Promise<never>((_, resolve) => {
     timeoutId = setTimeout(() => {
-      reject(new TimeoutError(timeoutDuration))
+      resolve(Ok(new TimeoutError(timeoutDuration)))
     }, timeoutMs)
   })
 
-  try {
-    return (await Promise.race([task(), timeoutPromise]).catch(
-      (e: unknown): ErrResult<unknown, TimeoutErr> => {
-        if (useResult) {
-          return Err({ type: "timeout", timeout: timeoutDuration })
-        }
-        throw e
-      },
-    )) as any
-  } finally {
+  const taskPromise = task()
+  const isResultAsync = taskPromise instanceof ResultAsync
+
+  if (isResultAsync) {
+    return ResultAsync(Promise.race([taskPromise.toPromise(), timeoutPromise])).andThen((r) => {
+      clearTimeout(timeoutId)
+      
+      if (r instanceof TimeoutError) {
+        return Err({ type: "timeout"; timeout: Temporal.Duration })
+      }
+
+      
+      return e
+    })
+  }
+
+  return Promise.race([taskPromise, timeoutPromise]).finally(() => {
     if (timeoutId !== undefined) {
       clearTimeout(timeoutId)
     }
-  }
+  }) as any
 }
 
 export class TimeoutError extends BaseError {

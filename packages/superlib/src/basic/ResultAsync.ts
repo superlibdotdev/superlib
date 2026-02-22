@@ -1,4 +1,4 @@
-import { Err, Ok, Result, type TaggedError } from "./Result"
+import { Err, ErrResult, Ok, Result, type TaggedError } from "./Result"
 
 class ResultAsyncClazz<V, E extends TaggedError> {
   private readonly promisedResult: Promise<Result<V, E>>
@@ -36,6 +36,20 @@ class ResultAsyncClazz<V, E extends TaggedError> {
     })
 
     return new ResultAsyncClazz<V2, E>(result)
+  }
+
+  mapErr<E2 extends TaggedError>(
+    mapper: (err: ErrResult<never, E>) => ErrResult<never, E2>,
+  ): ResultAsyncClazz<V, E | E2> {
+    const result = this.promisedResult.then(async (r) => {
+      if (r.isOk()) {
+        return r
+      } else {
+        return mapper(r as any)
+      }
+    })
+
+    return new ResultAsyncClazz<V, E2>(result as any)
   }
 
   mapTry<V2, E2 extends TaggedError>(
@@ -85,7 +99,7 @@ class ResultAsyncClazz<V, E extends TaggedError> {
 }
 
 function ResultAsyncClass<V, E extends TaggedError>(
-  resultAsync: Promise<Result<V, E>>,
+  resultAsync: Promise<Result<V, E>> | Result<V, E>,
 ): ResultAsyncClazz<V, E> {
   return new ResultAsyncClazz(resultAsync)
 }

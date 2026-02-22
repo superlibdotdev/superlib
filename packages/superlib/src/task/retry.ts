@@ -1,10 +1,11 @@
 import type { Task, TaskMapper } from "./types"
 
-import { assert, ErrResult, Result } from "../basic"
+import { assert, ErrResult, Result, ResultAsync } from "../basic"
 import { type IRandom, RealRandom } from "../random"
 import { multiplyDuration, sleep, type DurationLike } from "../time"
 
-export type ErrResultOrError<T> = T extends Result<any, infer E> ? ErrResult<unknown, E> : unknown
+export type ErrResultOrError<T> =
+  T extends ResultAsync<any, infer E> ? ErrResult<unknown, E> : unknown
 
 export interface RetryOptions<R> {
   until?: (error: ErrResultOrError<R>) => boolean
@@ -56,7 +57,8 @@ async function runRetry<T>(
     let resultError: ErrResult<any, any> | undefined = undefined
 
     try {
-      const result = await task()
+      const result_ = task()
+      const result = await (result_ instanceof ResultAsync ? result_.toPromise() : result_)
       if (!(result instanceof Result) || result.isOk()) {
         return result
       }
